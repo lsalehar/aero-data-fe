@@ -1,0 +1,13 @@
+*.db
+*.py[cod]
+.web
+.env
+.mypy_cache
+.vscode
+Deploy Logs
+test_files/
+poetry.lock
+__pycache__/
+assets/external/
+raw_data/
+uploaded_files/

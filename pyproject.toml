@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "aero-data"
+version = "0.1.0"
+description = ""
+authors = ["lsalehar <lsalehar@users.noreply.github.com>"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+supabase = "^2.10.0"
+python-decouple = "^3.8"
+shapely = "^2.0"
+google-cloud-storage = "^2.19.0"
+reflex = "^0.6"
+plotly = "^5.24.1"
+tqdm = "^4.67.1"
+cuid2 = "^2.0.1"
+python-dotenv = "^1.0.1"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.10.0"
+flake8 = "^7.1.1"
+mypy = "^1.13.0"
+isort = "^5.13.2"
+ipython = "^8.30.0"
+autoflake = "^2.3.1"
