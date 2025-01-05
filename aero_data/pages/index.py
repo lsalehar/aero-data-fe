@@ -87,18 +87,18 @@ def upload_form(upload_id: str) -> rx.Component:
                 UpdateCupFile.DONE,
                 rx.flex(
                     rx.button(
+                        "Back",
+                        variant="outline",
+                        on_click=UpdateCupFile.reset_state(upload_id),
+                        flex_grow=1,
+                    ),
+                    rx.button(
                         "Download updated file.",
                         on_click=UpdateCupFile.download_zip,
                         flex_grow=1,
                     ),
-                    rx.button(
-                        "Back",
-                        variant="outline",
-                        on_click=UpdateCupFile.reset_state,
-                        flex_grow=1,
-                    ),
                     flex_grow=1,
-                    direction="row-reverse",
+                    direction="row",
                     spacing="4",
                 ),
             ),
@@ -107,7 +107,7 @@ def upload_form(upload_id: str) -> rx.Component:
     )
 
 
-@rx.page(route="/", on_load=UpdateCupFile.reset_state)
+@rx.page(route="/", on_load=UpdateCupFile.log_page_visit)
 def index() -> rx.Component:
     upload_id = "upload_1"
     return main_container(

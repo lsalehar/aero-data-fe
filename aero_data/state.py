@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import reflex as rx
+from aero_data.src.analytics import log_event
 from aero_data.src.query_db import get_last_update_and_details
 from aero_data.src.update_airports_in_cup import update_airports_in_cup
 from aero_data.src.update_airports_in_db import AirportUpdater
@@ -15,6 +16,17 @@ class State(rx.State):
     def current_page(self) -> str:
         return self.router.page.path
 
+    @rx.event
+    def log_page_visit(self):
+        log_event(
+            "page_visit",
+            self.router.session.session_id,
+            {"page_name": self.current_page},
+        )
+
+    def log_event(self, event: str, event_details: dict = {}):
+        log_event(event, self.router.session.session_id, event_details)
+
 
 class UpdateCupFile(State):
     PRE_UPDATE = "pre-update"
@@ -22,26 +34,19 @@ class UpdateCupFile(State):
     DONE = "done"
 
     stage: str = PRE_UPDATE
-    file_name: str
+    file_name: str = ""
     update_locations: bool = True
     delete_closed: bool = False
     _zip_file: Optional[bytes] = None
 
     @rx.event
-    def reset_state(self):
+    def reset_state(self, upload_id: str):
         """
         Reset the state variables to their initial values.
         """
         self.stage = self.PRE_UPDATE
         self.file_name = ""
-        self._zip_file = None
-        rx.clear_selected_files("uplaod_1")
-        yield
-
-    @rx.event
-    def start_update(self, files: list[rx.UploadFile]):
-
-        self.handle_upload(files)
+        yield rx.clear_selected_files(upload_id)
 
     @rx.event
     async def handle_upload(self, files: list[rx.UploadFile]):
@@ -52,6 +57,9 @@ class UpdateCupFile(State):
             data = await file.read()
             self.file_name = file.filename or ""
 
+        if data:
+            self.log_event("upload", {"file_name": file.filename, "file_size": file.size})
+
         updated_file, report = update_airports_in_cup(
             data,
             self.file_name,
@@ -60,6 +68,8 @@ class UpdateCupFile(State):
         )
 
         updated_file_name = self.file_name.replace(".cup", "-updated.cup")
+        self.log_event("cup_updated", {"file_name": updated_file_name})
+
         self._zip_file = self.create_zip(updated_file, updated_file_name, report)
 
         self.stage = self.DONE
@@ -79,10 +89,14 @@ class UpdateCupFile(State):
         if not self._zip_file:
             raise ValueError("No ZIP file avaialable for download")
 
-        return rx.download(
-            filename=f"{self.file_name.replace('.cup', '')}_updated.zip", data=self._zip_file
+        updated_name = f"{self.file_name.replace(".cup", "")}_updated.zip"
+
+        self.log_event(
+            "download_update_package",
+            {"file_name": updated_name, "file_size": len(self._zip_file)},
         )
-        yield
+
+        yield rx.download(filename=updated_name, data=self._zip_file)
 
 
 class DBUpdate(State):
@@ -149,6 +163,7 @@ class DBUpdate(State):
         return False
 
     def determine_status(self):
+        yield self.log_page_visit()
         data = get_last_update_and_details() or {}
         self.report = data.get("details", {})
         if data.get("timestamp"):
