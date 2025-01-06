@@ -39,12 +39,15 @@ After update:
     for item in data["updated"]:
         report += f"Old: {item[0]}\n"
         report += f"New: {item[1]}\n"
-        report += f"Dst: {item[2]:.0f} m\n\n"
+        report += f"Dst: {float(item[2]):.0f} m\n\n"
 
     if data["removed"]:
         report += "# List of removed airports:\n"
         for item in data["removed"]:
-            report += f"{item[0]}, because {item[1].name} is closed, distance {item[2]:.0} m\n"
+            report += (
+                f"Removed {item[0].name}, {item[0].lat} {item[0].lon} because it is closed\n"
+            )
+            report += f"Dst: {float(item[2]):.0f} m\n\n"
 
     if data["not_fonud"]:
         report += "\n# List of not updated airports:\n"
@@ -102,6 +105,8 @@ def update_cup_waypoint(waypoint1: CupWaypoint, waypoint2: CupWaypoint, attrs: t
             setattr(waypoint1, attr, new_value)
 
 
+# FIXME: There are not_updated and not_found airports, print those to the report and also check
+# what is the difference.
 def update_airports_in_cup(
     file: bytes,
     file_name: str,
