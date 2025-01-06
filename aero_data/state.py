@@ -1,4 +1,5 @@
 import io
+import os
 import zipfile
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -32,9 +33,11 @@ class UpdateCupFile(State):
     PRE_UPDATE = "pre-update"
     RUNNING = "running"
     DONE = "done"
+    ERROR = "error"
 
     stage: str = PRE_UPDATE
     file_name: str = ""
+    error_message: str = ""
     update_locations: bool = True
     delete_closed: bool = False
     _zip_file: Optional[bytes] = None
@@ -50,30 +53,37 @@ class UpdateCupFile(State):
 
     @rx.event
     async def handle_upload(self, files: list[rx.UploadFile]):
-        self.stage = self.RUNNING
-        yield
+        try:
+            self.stage = self.RUNNING
+            yield
 
-        for file in files:
-            data = await file.read()
-            self.file_name = file.filename or ""
+            for file in files:
+                data = await file.read()
+                file_name = file.filename or ""
+                self.file_name = os.path.basename(file_name)
 
-        if data:
-            self.log_event("upload", {"file_name": file.filename, "file_size": file.size})
+            if data:
+                self.log_event("upload", {"file_name": file.filename, "file_size": file.size})
 
-        updated_file, report = update_airports_in_cup(
-            data,
-            self.file_name,
-            fix_location=self.update_locations,
-            delete_closed=self.delete_closed,
-        )
+            updated_file, report = update_airports_in_cup(
+                data,
+                self.file_name,
+                fix_location=self.update_locations,
+                delete_closed=self.delete_closed,
+            )
 
-        updated_file_name = self.file_name.replace(".cup", "-updated.cup")
-        self.log_event("cup_updated", {"file_name": updated_file_name})
+            updated_file_name = self.file_name.replace(".cup", "-updated.cup")
+            self.log_event("cup_updated", {"file_name": updated_file_name})
 
-        self._zip_file = self.create_zip(updated_file, updated_file_name, report)
+            self._zip_file = self.create_zip(updated_file, updated_file_name, report)
 
-        self.stage = self.DONE
-        yield
+            self.stage = self.DONE
+            yield
+        except Exception as e:
+            self.stage = self.ERROR
+            self.error_message = str(e)
+            self.log_event("upload_error", {"error": self.error_message})
+            yield
 
     def create_zip(self, updated_file: CupFile, updated_file_name: str, report: str) -> bytes:
         zip_buffer = io.BytesIO()

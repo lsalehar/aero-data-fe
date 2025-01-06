@@ -3,7 +3,6 @@
 .web
 .env
 .mypy_cache
-.vscode
 Deploy Logs
 test_files/
 poetry.lock

@@ -102,12 +102,32 @@ def upload_form(upload_id: str) -> rx.Component:
                     spacing="4",
                 ),
             ),
+            (
+                UpdateCupFile.ERROR,
+                rx.vstack(
+                    rx.callout(
+                        rx.text(
+                            "An error occurred while processing the file:",
+                            rx.text(UpdateCupFile.error_message, weight="regular"),
+                            weight="medium",
+                        ),
+                        icon="triangle_alert",
+                        color_scheme="red",
+                        role="alert",
+                    ),
+                    rx.button(
+                        "Back",
+                        variant="outline",
+                        on_click=UpdateCupFile.reset_state(upload_id),
+                    ),
+                ),
+            ),
             select_file(upload_id),
         )
     )
 
 
-@rx.page(route="/", on_load=UpdateCupFile.log_page_visit)
+@rx.page(route="/")
 def index() -> rx.Component:
     upload_id = "upload_1"
     return main_container(
