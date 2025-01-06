@@ -6,5 +6,6 @@ def main_container(*children: rx.Component) -> rx.Component:
         rx.vstack(children, spacing="6"),
         size="1",
         padding="2rem",
-        height="100%",
+        width="100%",
+        height="100vh",
     )
