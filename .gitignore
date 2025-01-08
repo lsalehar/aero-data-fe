@@ -2,6 +2,7 @@
 *.py[cod]
 .web
 .env
+.env.prod
 .mypy_cache
 Deploy Logs
 test_files/
@@ -10,3 +11,4 @@ __pycache__/
 assets/external/
 raw_data/
 uploaded_files/
+outlandings/

@@ -146,6 +146,7 @@ class DBUpdate(State):
             self.status = self.UPTODATE
             self.report = updater.report()
             self._last_updated = updater.last_update
+            yield self.last_updated
             yield
 
         except Exception as e:

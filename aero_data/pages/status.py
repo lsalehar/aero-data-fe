@@ -10,6 +10,22 @@ def print_report(item: List) -> rx.Component:
     return rx.text(f"{item[0]}: {item[1]}", size="1", color=rx.color("green", shade=11))
 
 
+def update_button(text: str, **kwargs) -> rx.Component:
+    default_props = {"color_scheme": "gray", "variant": "surface"}
+    props = {**default_props, **kwargs}
+    return rx.button(text, **props)
+
+
+def update_button_state() -> rx.Component:
+    return rx.match(
+        DBUpdate.status,
+        (DBUpdate.IDLE, update_button("Update", on_click=DBUpdate.update_airports)),
+        (DBUpdate.RUNNING, update_button("Updating", loading=True)),
+        (DBUpdate.ERROR, update_button("Retry", on_click=DBUpdate.update_airports)),
+        update_button("Up to date", disabled=True),
+    )  # type:ignore
+
+
 @rx.page(route="/status", on_load=DBUpdate.determine_status)
 def status() -> rx.Component:
     return main_container(
@@ -29,6 +45,7 @@ def status() -> rx.Component:
                         spacing="1",
                         flex_grow="1",
                     ),
+                    rx.cond(not rx.app.is_prod_mode(), update_button_state()),
                     align="center",
                 ),
                 rx.cond(
