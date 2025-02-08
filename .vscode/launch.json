@@ -11,5 +11,11 @@
             "module": "reflex",
             "args": ["run"]
         },
+        {
+            "name": "Run as module",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "${command:extension.commandvariable.file.relativeFileDotsNoExtension}",
+        },
     ]
 }

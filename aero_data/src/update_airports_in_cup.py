@@ -7,8 +7,7 @@ from typing import Optional
 from more_itertools import chunked
 
 from aero_data.models import Airport
-from aero_data.src.query_db import get_nearest_airport_bulk
-from aero_data.src.update_airports_in_db import deserialize_apt_json
+from aero_data.src.db import get_nearest_airport_bulk
 from aero_data.utils.naviter import CupFile, cup
 from aero_data.utils.naviter.waypoint import CupWaypoint
 from aero_data.utils.openaip.constants import AirportType
@@ -82,7 +81,7 @@ def parse_annotated_airports(results: list[dict]) -> dict[int, Optional[AirportD
             annotated_airports[point_index] = None
             continue
 
-        airport_data = deserialize_apt_json(
+        airport_data = Airport.deserialize_apt_json(
             {k: v for k, v in record.items() if k != "point_index"}, as_dict=True
         )
         annotated_airports[point_index] = AirportDistance(**airport_data)  # type:ignore

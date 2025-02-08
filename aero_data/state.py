@@ -6,9 +6,9 @@ from typing import Optional
 
 import reflex as rx
 from aero_data.src.analytics import log_event
-from aero_data.src.query_db import get_last_update_and_details
+from aero_data.src.db import get_last_update_and_details
 from aero_data.src.update_airports_in_cup import update_airports_in_cup
-from aero_data.src.update_airports_in_db import AirportUpdater
+from aero_data.src.update_airports_in_db import OAPUpdater
 from aero_data.utils.naviter.cup import CupFile
 
 
@@ -129,10 +129,10 @@ class DBUpdate(State):
                 yield
                 return
 
-            updater = AirportUpdater(last_update=self._last_updated)
+            updater = OAPUpdater(last_update=self._last_updated)
             stages = (
-                ("Downloading Data", updater.download_airports),
-                ("Updating DB", updater.update_airports),
+                ("Downloading Data", updater.download_data),
+                ("Updating DB", updater.update_data_in_db),
             )
             self.status = "Running"
             self.error_msg = ""
