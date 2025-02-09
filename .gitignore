@@ -3,6 +3,7 @@
 .web
 .env
 .env.prod
+.env.dev
 .mypy_cache
 Deploy Logs
 poetry.lock
