@@ -171,7 +171,7 @@ class Airport(AeroDataModel):
         )
 
     @classmethod
-    def deserialize_apt_json(cls, apt_json: dict, as_dict=False):
+    def _deserialize(cls, apt_json: dict) -> dict:
         countries = CountriesLoader.get_countries()
         apt = {
             **apt_json,
@@ -181,4 +181,12 @@ class Airport(AeroDataModel):
             "created_at": datetime.fromisoformat(apt_json.get("created_at", None)),
             "updated_at": datetime.fromisoformat(apt_json.get("updated_at", None)),
         }
-        return cls(**apt) if not as_dict else apt
+        return apt
+
+    @classmethod
+    def deserialize_apt_json_to_dict(cls, apt_json: dict) -> dict:
+        return cls._deserialize(apt_json)
+
+    @classmethod
+    def deserialize_apt_json(cls, apt_json: dict) -> "Airport":
+        return cls(**cls._deserialize(apt_json))
