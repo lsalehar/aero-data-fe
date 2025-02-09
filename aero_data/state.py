@@ -39,6 +39,7 @@ class UpdateCupFile(State):
     file_name: str = ""
     error_message: str = ""
     update_locations: bool = True
+    add_missing: bool = True
     delete_closed: bool = False
     _zip_file: Optional[bytes] = None
 
@@ -70,6 +71,7 @@ class UpdateCupFile(State):
                 self.file_name,
                 fix_location=self.update_locations,
                 delete_closed=self.delete_closed,
+                add_new=self.add_missing,
             )
 
             updated_file_name = self.file_name.replace(".cup", "-updated.cup")

@@ -54,6 +54,16 @@ def select_file(upload_id: str) -> rx.Component:
             tooltip_content="If selected, we will update the airport location with the one from our database.",
         ),
         switch(
+            "Add missing airports",
+            "delete_closed",
+            default_checked=UpdateCupFile.add_missing,
+            on_change=UpdateCupFile.set_add_missing,  # type:ignore
+            tooltip_content=(
+                "If enabled, airports located within the bounding box of all waypoints in the uploaded CUP file "
+                "will be automatically added to the updated file."
+            ),
+        ),
+        switch(
             "Remove closed airports",
             "delete_closed",
             default_checked=UpdateCupFile.delete_closed,

@@ -5,7 +5,6 @@
 .env.prod
 .mypy_cache
 Deploy Logs
-test_files/
 poetry.lock
 __pycache__/
 assets/external/
