@@ -2,16 +2,16 @@ import os
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timezone
-from typing import Optional, Tuple
+from typing import Optional
 
 from more_itertools import chunked
-from shapely import MultiPoint, Point
+from shapely import MultiPoint
 
 from aero_data.models import Airport
 from aero_data.src.db import get_apts_in_bbox, get_nearest_airport_bulk
 from aero_data.utils.naviter import CupFile, cup
 from aero_data.utils.naviter.waypoint import CupWaypoint
-from aero_data.utils.openaip.constants import APT_TYPE, AirportType
+from aero_data.utils.openaip.constants import AirportType
 
 
 def generate_report(
@@ -101,7 +101,7 @@ def parse_annotated_airports(results: list[dict]) -> dict[int, Optional[AirportD
                     {k: v for k, v in record.items() if k != "point_index"}
                 )
             )
-            if record["point_index"] is not None
+            if record["id"] is not None
             else None
         )
         for record in results
@@ -260,7 +260,7 @@ def update_airports_in_cup(
 
 
 if __name__ == "__main__":
-    file_path = "raw_data/test_cup_files/AlpeAdria22.cup"
+    file_path = "raw_data/test_cup_files/kdf20101.cup"
     fp, fn = os.path.split(file_path)
     fn = fn.removesuffix(".cup")
     print(os.getcwd())

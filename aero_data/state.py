@@ -1,14 +1,13 @@
 import io
 import os
 import zipfile
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from typing import Optional
 
 import reflex as rx
 from aero_data.src.analytics import log_event
 from aero_data.src.db import get_last_update_and_details
 from aero_data.src.update_airports_in_cup import update_airports_in_cup
-from aero_data.src.update_airports_in_db import OAPUpdater
 from aero_data.utils.naviter.cup import CupFile
 
 
@@ -111,50 +110,9 @@ class UpdateCupFile(State):
         yield rx.download(filename=updated_name, data=self._zip_file)
 
 
-class DBUpdate(State):
-    IDLE = "Idle"
-    RUNNING = "Running"
-    ERROR = "Error"
-    UPTODATE = "Up to date"
-
-    status: str = ""
-    stage: str = ""
-    error_msg: str = ""
+class DBStatus(State):
     report: dict[str, str] = {}
     _last_updated: Optional[datetime] = None
-
-    @rx.event
-    def update_airports(self):
-        try:
-            if not self.updatable():
-                self.status = self.UPTODATE
-                yield
-                return
-
-            updater = OAPUpdater(last_update=self._last_updated)
-            stages = (
-                ("Downloading Data", updater.download_data),
-                ("Updating DB", updater.update_data_in_db),
-            )
-            self.status = "Running"
-            self.error_msg = ""
-            yield
-
-            for stage_name, stage_action in stages:
-                self.stage = stage_name
-                yield
-                stage_action()
-
-            self.status = self.UPTODATE
-            self.report = updater.report()
-            self._last_updated = updater.last_update
-            yield self.last_updated
-            yield
-
-        except Exception as e:
-            self.status = self.ERROR
-            self.error_msg = str(e)
-            yield
 
     @rx.var
     def last_updated(self) -> str:
@@ -168,13 +126,6 @@ class DBUpdate(State):
             return {}
         return {key.title(): value for key, value in self.report.items()}
 
-    def updatable(self) -> bool:
-        if self._last_updated and datetime.now(timezone.utc) - self._last_updated >= timedelta(
-            days=1
-        ):
-            return True
-        return False
-
     def determine_status(self):
         yield self.log_page_visit()
         data = get_last_update_and_details() or {}
@@ -183,6 +134,3 @@ class DBUpdate(State):
             self._last_updated = datetime.fromisoformat(data["timestamp"])
         else:
             self._last_updated = None
-
-        self.status = self.IDLE if self.updatable() else self.UPTODATE
-        yield

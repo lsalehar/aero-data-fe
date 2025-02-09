@@ -5,7 +5,6 @@ import os
 from typing import Any, Iterable, List, Optional, Tuple
 
 from charset_normalizer import from_bytes
-from numpy import iterable
 
 from aero_data.utils.naviter.constants import CUP_FIELDS, CUP_FIELDS_MAPPING
 from aero_data.utils.naviter.waypoint import CupWaypoint
