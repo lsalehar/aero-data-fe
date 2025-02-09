@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 from itertools import count
 from typing import Dict, List, Tuple
+from unittest import result
 
 from postgrest.exceptions import APIError
 from shapely import Point
@@ -79,6 +80,25 @@ def get_or_create_airport(airport: Airport) -> Tuple[dict, bool]:
     response = db_client.table("airports").insert(airport.to_dict()).execute()
     airport.id = response.data[0]["id"]
     return airport, True  # type: ignore
+
+
+def get_apts_in_bbox(
+    bbox: tuple | list,
+    exclude_source_ids: list | None = None,
+    exclude_apt_types: list | None = None,
+):
+    parameters = {
+        "min_lon": bbox[0],
+        "min_lat": bbox[1],
+        "max_lon": bbox[2],
+        "max_lat": bbox[3],
+    }
+    if isinstance(exclude_source_ids, (list, tuple)) and exclude_source_ids:
+        parameters.update(exclude_ids=exclude_source_ids)
+    if isinstance(exclude_apt_types, (list, tuple)) and exclude_apt_types:
+        parameters.update(exclude_apt_types=exclude_apt_types)
+    response = db_client.rpc("get_airports_in_bbox", params=parameters).execute()
+    return response.data if response.data else None
 
 
 def fetch_all_data(table: str, select: str, chunk_size: int = 1000) -> List[Dict]:

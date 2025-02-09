@@ -2,18 +2,21 @@ import os
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Tuple
 
 from more_itertools import chunked
+from shapely import MultiPoint, Point
 
 from aero_data.models import Airport
-from aero_data.src.db import get_nearest_airport_bulk
+from aero_data.src.db import get_apts_in_bbox, get_nearest_airport_bulk
 from aero_data.utils.naviter import CupFile, cup
 from aero_data.utils.naviter.waypoint import CupWaypoint
-from aero_data.utils.openaip.constants import AirportType
+from aero_data.utils.openaip.constants import APT_TYPE, AirportType
 
 
-def generate_report(file_name: str | None, search_r: int, counts: dict, data: dict) -> str:
+def generate_report(
+    file_name: str | None, counts: dict, data: dict, search_r: int, update_r: int
+) -> str:
     report = f"""
 ############################################################
 Report for: {file_name or "Unknown File Name"}
@@ -21,37 +24,56 @@ Updated on: {datetime.now(timezone.utc).isoformat(timespec="minutes")}
 ############################################################
 
 # General
-Before update:
-{counts['total_wpts_before']} total waypoints
-{counts['total_apts_before']} airports of which:
-    - {counts['updated']} were updated,
-    - {counts['removed']} were removed,
-    - {counts['not_found']} where no update was found.
+Before the update the file had:
+{counts["total_wpts_before"]} total waypoints
+{counts['total_apts_before']} airports
 
-After update:
-{counts['total_wpts_after']} total waypoints
-{counts['total_apts_after']} airports
+We search for candidates in the OpenAip DB with a radius of {search_r}m around the point of the 
+airport stored in the CUP file. The airport is updated if the distance between the point of the 
+airport and the found airport in the OpenAIP is less than the update radius of: {update_r}m
+
+After update the file has:
+{counts["total_wpts_after"]} total waypoints
+{counts["total_apts_after"]} airports
+
+{counts["updated"]} Airports were updated,
+{counts["added"]} were added,
+{counts["deleted"]} were deleted,
+{counts["not_found"]} were not found in the OpenAIP DB and,
+{counts["not_updated"]} were already up to date.
 
 """
 
-    report += "# List of updated airports:\n"
-    for item in data["updated"]:
-        report += f"Old: {item[0]}\n"
-        report += f"New: {item[1]}\n"
-        report += f"Dst: {float(item[2]):.0f} m\n\n"
+    if data["updated"]:
+        report += "# List of updated airports:\n"
+        for item in data["updated"]:
+            report += f"Old: {item[0]}\n"
+            report += f"New: {item[1]}\n"
+            report += f"Dst: {float(item[2]):.0f}m\n\n"
 
-    if data["removed"]:
-        report += "# List of removed airports:\n"
-        for item in data["removed"]:
-            report += (
-                f"Removed {item[0].name}, {item[0].lat} {item[0].lon} because it is closed\n"
-            )
-            report += f"Dst: {float(item[2]):.0f} m\n\n"
+    if data["added"]:
+        report += "# List of added airports:\n"
+        for item in data["added"]:
+            report += f"{item.name}: {item.lat:0.6}, {item.lon:0.6}\n"
+        report += "\n"
 
-    if data["not_fonud"]:
-        report += "\n# List of not updated airports:\n"
+    if data["deleted"]:
+        report += "# List of deleted airports:\n"
+        for item in data["deleted"]:
+            report += f"{item[0].name}: {item[0].lat:0.6}, {item[0].lon:0.6} Closed. Dst: {float(item[2]):.0f}m\n"
+        report += "\n"
+
+    if data["not_updated"]:
+        report += "\n# List of airports that were not updated:\n"
+        for item in data["not_updated"]:
+            report += f"Apt in CUP:\t{item[0]}\n"
+            report += f"Candidate:\t{item[1]}\n"
+            report += f"Dst:\t\t{float(item[2]):.0f}m > {update_r}\n\n"
+
+    if data["not_found"]:
+        report += "\n# List of airports that were not found in the DB:\n"
         for item in data["not_found"]:
-            report += f"{item}"
+            report += f"{item.name}: {item.lat:0.6}, {item.lon:0.6}\n"
 
     return report
 
@@ -72,21 +94,18 @@ def parse_annotated_airports(results: list[dict]) -> dict[int, Optional[AirportD
     Returns:
         dict[int, Optional[AirportDistance]]: Mapping of point indices to AirportDistance objects.
     """
-    annotated_airports = {}
-
-    for record in results:
-        point_index = record["point_index"]
-
-        if record["id"] is None:
-            annotated_airports[point_index] = None
-            continue
-
-        airport_data = Airport.deserialize_apt_json(
-            {k: v for k, v in record.items() if k != "point_index"}, as_dict=True
+    return {
+        record["point_index"]: (
+            AirportDistance(
+                **Airport.deserialize_apt_json_to_dict(
+                    {k: v for k, v in record.items() if k != "point_index"}
+                )
+            )
+            if record["point_index"] is not None
+            else None
         )
-        annotated_airports[point_index] = AirportDistance(**airport_data)  # type:ignore
-
-    return annotated_airports
+        for record in results
+    }
 
 
 def update_cup_waypoint(waypoint1: CupWaypoint, waypoint2: CupWaypoint, attrs: tuple | list):
@@ -104,8 +123,6 @@ def update_cup_waypoint(waypoint1: CupWaypoint, waypoint2: CupWaypoint, attrs: t
             setattr(waypoint1, attr, new_value)
 
 
-# FIXME: There are not_updated and not_found airports, print those to the report and also check
-# what is the difference.
 def update_airports_in_cup(
     file: bytes,
     file_name: str,
@@ -113,6 +130,7 @@ def update_airports_in_cup(
     update_r: int = 2000,
     fix_location: bool = True,
     delete_closed: bool = False,
+    add_new: bool = False,
 ):
     """
     Update airports in a CUP file using bulk queries to the database.
@@ -170,6 +188,8 @@ def update_airports_in_cup(
 
     # Prepare points for bulk queries
     points = [apt.get_point() for apt in airports_in_cup]
+    # Prepare a list of ids that we've seen in the file
+    seen_ids = []
 
     for point_chunk, apt_chunk in zip(
         chunked(points, chunk_size), chunked(airports_in_cup, chunk_size)
@@ -185,6 +205,7 @@ def update_airports_in_cup(
                 continue
 
             if closest_apt.distance <= update_r:
+                seen_ids.append(closest_apt.source_id)
                 if not closest_apt.apt_type == AirportType.CLOSED:
                     data_report["updated"].append(
                         (deepcopy(apt_in_cup), apt_in_cup, closest_apt.distance)
@@ -197,7 +218,7 @@ def update_airports_in_cup(
                 else:
                     if delete_closed:
                         cup_file.waypoints.remove(apt_in_cup)
-                        data_report["removed"].append(
+                        data_report["deleted"].append(
                             (deepcopy(apt_in_cup), closest_apt.to_cup(), closest_apt.distance)
                         )
 
@@ -206,25 +227,46 @@ def update_airports_in_cup(
                     (deepcopy(apt_in_cup), closest_apt.to_cup(), closest_apt.distance)
                 )
 
+        if add_new:
+            new_apts = get_apts_in_bbox(
+                MultiPoint(point_chunk).bounds,
+                exclude_source_ids=seen_ids,
+                exclude_apt_types=[
+                    AirportType.AIRPORT_WATER,
+                    AirportType.CLOSED,
+                    AirportType.HELIPORT_CIVIL,
+                    AirportType.HELIPORT_MIL,
+                    AirportType.UNKNOWN,
+                ],
+            )
+            if new_apts:
+                for apt in new_apts:
+                    apt_obj = Airport.deserialize_apt_json(apt)
+                    cup_file.waypoints.append(apt_obj.to_cup())
+                    seen_ids.append(apt_obj.source_id)  # type: ignore
+                    data_report["added"].append(apt_obj.to_cup())
+
     counts["updated"] = len(data_report["updated"])
-    counts["removed"] = len(data_report["removed"])
+    counts["added"] = len(data_report["added"])
+    counts["deleted"] = len(data_report["deleted"])
     counts["not_found"] = len(data_report["not_found"])
+    counts["not_updated"] = len(data_report["not_updated"])
     counts["total_wpts_after"] = len(cup_file.waypoints)
     counts["total_apts_after"] = len(cup_file.airports())
 
-    report = generate_report(cup_file.file_name, search_r, counts, data_report)
+    report = generate_report(cup_file.file_name, counts, data_report, search_r, update_r)
 
     return cup_file, report
 
 
 if __name__ == "__main__":
-    file_path = "test_files/kdf20101.cup"
+    file_path = "raw_data/test_cup_files/AlpeAdria22.cup"
     fp, fn = os.path.split(file_path)
     fn = fn.removesuffix(".cup")
     print(os.getcwd())
     with open(file_path, "rb") as f:
         cup_file = f.read()
-    cup_file, report = update_airports_in_cup(cup_file, fn, delete_closed=True)
-    cup.dump(cup_file, f"uploaded_files/{fn}_updated.cup")
-    with open(f"uploaded_files/{fn}_report.txt", "w") as f:
+    cup_file, report = update_airports_in_cup(cup_file, fn, delete_closed=True, add_new=True)
+    cup.dump(cup_file, f"{fp}/{fn}_updated.cup")
+    with open(f"{fp}/{fn}_report.txt", "w") as f:
         f.write(report)
