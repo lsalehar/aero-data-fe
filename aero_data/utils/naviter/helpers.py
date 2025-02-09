@@ -125,12 +125,17 @@ def format_distance(dist_in_m: float, unit: str) -> str:
         "ft": (FT_2_M, "{:.0f}ft"),  # No decimal places for feet
         "nm": (NM_2_M, "{:.2f}nm"),  # Two decimal places for nautical miles
         "ml": (ML_2_M, "{:.2f}ml"),  # Two decimal places for miles
-        "m": (1.0, "{:.1f}m"),  # One decimal place for meters
+        "m": (1.0, "{:.1f}m"),  # No decimal places for meters
     }
 
     factor, format_str = unit_conversion.get(unit.lower(), (1.0, "{:.1f}m"))
     distance = dist_in_m / factor
+
+    if unit.lower() == "m" and (distance * 10) % 1 == 0:
+        format_str = "{:.0f}m"
+
     fs = format_str.format(distance)
+
     return fs
 
 

@@ -9,6 +9,10 @@ from aero_data.utils.naviter import CupWaypoint
 from aero_data.utils.openaip import AirportType
 
 
+class AeroDataModel:
+    pass
+
+
 class Country(BaseModel):
     id: int
     name: str
@@ -18,7 +22,38 @@ class Country(BaseModel):
     region: Optional[str] = None
 
 
-class Airport:
+class Countries(BaseModel):
+    countries: List[Country] = []
+
+    @classmethod
+    def populate_data(cls, response: APIResponse) -> "Countries":
+        return cls(countries=[Country(**item) for item in response.data])
+
+    def get_by_iso2(self, iso2: str) -> Country:
+        for country in self.countries:
+            if country.iso2 == iso2.upper():
+                return country
+
+        raise ValueError(f"Country with ISO2 {iso2} not found")
+
+
+class CountriesLoader:
+    """Singleton to lazily load the Countries instance."""
+
+    _countries = None
+
+    @classmethod
+    def get_countries(cls):
+        if cls._countries is None:
+            from aero_data import (
+                countries,  # Import lazily to avoid circular dependencies
+            )
+
+            cls._countries = countries
+        return cls._countries
+
+
+class Airport(AeroDataModel):
 
     def __init__(
         self,
@@ -135,17 +170,23 @@ class Airport:
             freq=self.freq,
         )
 
-
-class Countries(BaseModel):
-    countries: List[Country] = []
+    @classmethod
+    def _deserialize(cls, apt_json: dict) -> dict:
+        countries = CountriesLoader.get_countries()
+        apt = {
+            **apt_json,
+            "apt_type": AirportType(apt_json.get("apt_type", 999)),
+            "country": countries.get_by_iso2(apt_json.get("country", "")),
+            "location": wkb.loads(apt_json.get("location", "")),
+            "created_at": datetime.fromisoformat(apt_json.get("created_at", None)),
+            "updated_at": datetime.fromisoformat(apt_json.get("updated_at", None)),
+        }
+        return apt
 
     @classmethod
-    def populate_data(cls, response: APIResponse) -> "Countries":
-        return cls(countries=[Country(**item) for item in response.data])
+    def deserialize_apt_json_to_dict(cls, apt_json: dict) -> dict:
+        return cls._deserialize(apt_json)
 
-    def get_by_iso2(self, iso2: str) -> Country:
-        for country in self.countries:
-            if country.iso2 == iso2.upper():
-                return country
-
-        raise ValueError(f"Country with ISO2 {iso2} not found")
+    @classmethod
+    def deserialize_apt_json(cls, apt_json: dict) -> "Airport":
+        return cls(**cls._deserialize(apt_json))

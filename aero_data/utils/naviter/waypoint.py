@@ -2,6 +2,7 @@ import csv
 from io import StringIO
 from typing import Any, Callable, Optional
 
+import reverse_geocode as rg
 from cuid2 import Cuid
 from shapely.geometry import Point
 
@@ -98,6 +99,9 @@ class CupWaypoint:
 
     @country.setter
     def country(self, value):
+        value_error = (
+            f"Invalid ISO 3166-a alpha-2 country code: '{value}' for waypoint: '{self.name}'"
+        )
         if not value or value is None:
             self._country = None
         elif value and isinstance(value, str) and len(value) == 2:
@@ -106,27 +110,28 @@ class CupWaypoint:
             else:
                 countries = CountriesLoader.get_countries()
                 country = countries.get_by_iso2(value.upper())  # type:ignore
-                if country:
-                    self._set_string_attr(value.upper(), "country")
-                else:
-                    raise ValueError(f"Invalid ISO 3166-a alpha-2 country code: {value}")
+                self._set_string_attr(country.iso2, "country")
         else:
-            raise ValueError("Country code must be a two-letter string.")
+            try:
+                country = rg.get((self.lat, self.lon))["country_code"]
+                self._set_string_attr(country, "country")
+            except KeyError:
+                raise ValueError(value_error)
 
     @property
-    def lat(self):
+    def lat(self) -> float:
         return self._lat
 
     @lat.setter
-    def lat(self, value):
+    def lat(self, value: str | float):
         self._update_coordinates(value, self.lon)
 
     @property
-    def lon(self):
+    def lon(self) -> float:
         return self._lon
 
     @lon.setter
-    def lon(self, value):
+    def lon(self, value: str | float):
         self._update_coordinates(self.lat, value)
 
     def _update_coordinates(self, lat, lon):
@@ -209,6 +214,9 @@ class CupWaypoint:
 
     @desc.setter
     def desc(self, value):
+        if isinstance(value, str):
+            # Clean multiple spaces.
+            value = " ".join(value.split())
         self._set_string_attr(value, "desc")
 
     @property

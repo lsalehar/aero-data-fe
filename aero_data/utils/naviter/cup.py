@@ -2,14 +2,33 @@ import csv
 import io
 import logging
 import os
-from typing import Optional, Tuple
+from typing import Any, Iterable, List, Optional, Tuple
 
 from charset_normalizer import from_bytes
+from numpy import iterable
 
 from aero_data.utils.naviter.constants import CUP_FIELDS, CUP_FIELDS_MAPPING
 from aero_data.utils.naviter.waypoint import CupWaypoint
 
 logger = logging.getLogger()
+
+
+class Waypoints(list):
+    def append(self, item: Any):
+        if not isinstance(item, CupWaypoint):
+            raise TypeError(f"Item must be a CupWaypoint, got {type(item)}")
+        super().append(item)
+
+    def extend(self, iterable: Iterable):
+        for item in iterable:
+            if isinstance(item, CupWaypoint):
+                raise TypeError(f"All items must be CupWaypoint, got {type(item)}")
+        super().extend(iterable)
+
+    def insert(self, index, item):
+        if not isinstance(item, CupWaypoint):
+            raise TypeError(f"Item must be a CupWaypoint, got {type(item)}")
+        super().insert(index, item)
 
 
 class CupFile:
@@ -18,10 +37,14 @@ class CupFile:
     there is no support for manipulating them.
     """
 
-    def __init__(self, file_name: Optional[str] = None):
-        self.file_name = file_name
-        self.waypoints = []
-        self._tasks = []
+    def __init__(self, file_name: str | None = None):
+        self.file_name: str | None = file_name
+        self._waypoints: Waypoints = Waypoints()
+        self._tasks: List[str] = []
+
+    @property
+    def waypoints(self) -> Waypoints:
+        return self._waypoints
 
     def load(self, file_path: str) -> "CupFile":
         self.file_name = os.path.basename(file_path)
@@ -36,9 +59,15 @@ class CupFile:
 
     def loads(self, data: bytes | str):
         if isinstance(data, bytes):
-            content = str(from_bytes(data).best())
-        else:
-            content = str(data)
+            results = from_bytes(data)
+            content = None
+            for result in results:
+                if result.chaos == 0 and result.encoding.startswith(("cp", "iso")):
+                    content = str(result)
+                    break
+
+        if content is None:
+            content = str(results.best())
 
         lines = content.splitlines()
         reader = csv.reader(lines, delimiter=",", quotechar='"')
@@ -122,22 +151,9 @@ class CupFile:
         if not self.waypoints:
             return None
 
-        min_lat = float("inf")
-        max_lat = float("-inf")
-        min_lon = float("inf")
-        max_lon = float("-inf")
+        x, y = zip(*[(wpt.lat, wpt.lon) for wpt in self.waypoints])
 
-        for waypoint in self.waypoints:
-            if waypoint.lat < min_lat:
-                min_lat = waypoint.lat
-            if waypoint.lat > max_lat:
-                max_lat = waypoint.lat
-            if waypoint.lon < min_lon:
-                min_lon = waypoint.lon
-            if waypoint.lon > max_lon:
-                max_lon = waypoint.lon
-
-        return (min_lat, min_lon, max_lat, max_lon)
+        return (min(x), min(y), max(x), max(y))
 
 
 def load(file_path: str) -> CupFile:

@@ -20,7 +20,7 @@ APT_TYPE = {
 }
 
 
-class AirportType(Enum):
+class AirportType(int, Enum):
     AIRPORT = 0
     GLIDER_SITE = 1
     AIRPORT_CIVIL = 2

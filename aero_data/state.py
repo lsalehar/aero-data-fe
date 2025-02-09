@@ -1,13 +1,14 @@
 import io
+import os
 import zipfile
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import reflex as rx
 from aero_data.src.analytics import log_event
-from aero_data.src.query_db import get_last_update_and_details
+from aero_data.src.db import get_last_update_and_details
 from aero_data.src.update_airports_in_cup import update_airports_in_cup
-from aero_data.src.update_airports_in_db import AirportUpdater
+from aero_data.src.update_airports_in_db import OAPUpdater
 from aero_data.utils.naviter.cup import CupFile
 
 
@@ -32,10 +33,13 @@ class UpdateCupFile(State):
     PRE_UPDATE = "pre-update"
     RUNNING = "running"
     DONE = "done"
+    ERROR = "error"
 
     stage: str = PRE_UPDATE
     file_name: str = ""
+    error_message: str = ""
     update_locations: bool = True
+    add_missing: bool = True
     delete_closed: bool = False
     _zip_file: Optional[bytes] = None
 
@@ -50,30 +54,38 @@ class UpdateCupFile(State):
 
     @rx.event
     async def handle_upload(self, files: list[rx.UploadFile]):
-        self.stage = self.RUNNING
-        yield
+        try:
+            self.stage = self.RUNNING
+            yield
 
-        for file in files:
-            data = await file.read()
-            self.file_name = file.filename or ""
+            for file in files:
+                data = await file.read()
+                file_name = file.filename or ""
+                self.file_name = os.path.basename(file_name)
 
-        if data:
-            self.log_event("upload", {"file_name": file.filename, "file_size": file.size})
+            if data:
+                self.log_event("upload", {"file_name": file.filename, "file_size": file.size})
 
-        updated_file, report = update_airports_in_cup(
-            data,
-            self.file_name,
-            fix_location=self.update_locations,
-            delete_closed=self.delete_closed,
-        )
+            updated_file, report = update_airports_in_cup(
+                data,
+                self.file_name,
+                fix_location=self.update_locations,
+                delete_closed=self.delete_closed,
+                add_new=self.add_missing,
+            )
 
-        updated_file_name = self.file_name.replace(".cup", "-updated.cup")
-        self.log_event("cup_updated", {"file_name": updated_file_name})
+            updated_file_name = self.file_name.replace(".cup", "-updated.cup")
+            self.log_event("cup_updated", {"file_name": updated_file_name})
 
-        self._zip_file = self.create_zip(updated_file, updated_file_name, report)
+            self._zip_file = self.create_zip(updated_file, updated_file_name, report)
 
-        self.stage = self.DONE
-        yield
+            self.stage = self.DONE
+            yield
+        except Exception as e:
+            self.stage = self.ERROR
+            self.error_message = str(e)
+            self.log_event("upload_error", {"error": self.error_message})
+            yield
 
     def create_zip(self, updated_file: CupFile, updated_file_name: str, report: str) -> bytes:
         zip_buffer = io.BytesIO()
@@ -119,10 +131,10 @@ class DBUpdate(State):
                 yield
                 return
 
-            updater = AirportUpdater(last_update=self._last_updated)
+            updater = OAPUpdater(last_update=self._last_updated)
             stages = (
-                ("Downloading Data", updater.download_airports),
-                ("Updating DB", updater.update_airports),
+                ("Downloading Data", updater.download_data),
+                ("Updating DB", updater.update_data_in_db),
             )
             self.status = "Running"
             self.error_msg = ""
@@ -136,6 +148,7 @@ class DBUpdate(State):
             self.status = self.UPTODATE
             self.report = updater.report()
             self._last_updated = updater.last_update
+            yield self.last_updated
             yield
 
         except Exception as e:
