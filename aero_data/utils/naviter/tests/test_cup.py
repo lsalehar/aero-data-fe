@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from utils.naviter.cup import CupFile
 
 # Sample test data for CUP file content
@@ -81,10 +80,10 @@ def test_outlandings(cup_file):
     assert outlandings[0].name == "Waypoint 2"  # style 3
 
 
-def test_get_bbox(cup_file):
+def test_bbox(cup_file):
     """Test getting bounding box for the waypoints."""
     cup_file.loads(CUP_FILE_CONTENT)
-    bbox = cup_file.get_bbox()
+    bbox = cup_file.bbox()
     assert bbox == (
         46.40805,
         13.931666666666667,
@@ -93,9 +92,9 @@ def test_get_bbox(cup_file):
     )  # min_lat, min_lon, max_lat, max_lon
 
 
-def test_get_bbox_no_waypoints(cup_file):
+def test_bbox_no_waypoints(cup_file):
     """Test bounding box when there are no waypoints."""
-    assert cup_file.get_bbox() is None
+    assert cup_file.bbox() is None
 
 
 def test_dumps(cup_file):

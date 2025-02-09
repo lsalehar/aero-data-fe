@@ -105,7 +105,7 @@ class CupWaypoint:
         if not value or value is None:
             self._country = None
         elif value and isinstance(value, str) and len(value) == 2:
-            if value in ["--", "-"]:
+            if value in ["--"]:
                 self._country = None
             else:
                 countries = CountriesLoader.get_countries()
@@ -119,19 +119,19 @@ class CupWaypoint:
                 raise ValueError(value_error)
 
     @property
-    def lat(self):
+    def lat(self) -> float:
         return self._lat
 
     @lat.setter
-    def lat(self, value):
+    def lat(self, value: str | float):
         self._update_coordinates(value, self.lon)
 
     @property
-    def lon(self):
+    def lon(self) -> float:
         return self._lon
 
     @lon.setter
-    def lon(self, value):
+    def lon(self, value: str | float):
         self._update_coordinates(self.lat, value)
 
     def _update_coordinates(self, lat, lon):
@@ -214,6 +214,9 @@ class CupWaypoint:
 
     @desc.setter
     def desc(self, value):
+        if isinstance(value, str):
+            # Clean multiple spaces.
+            value = " ".join(value.split())
         self._set_string_attr(value, "desc")
 
     @property
