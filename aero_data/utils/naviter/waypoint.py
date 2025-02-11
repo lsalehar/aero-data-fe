@@ -102,15 +102,12 @@ class CupWaypoint:
         value_error = (
             f"Invalid ISO 3166-a alpha-2 country code: '{value}' for waypoint: '{self.name}'"
         )
-        if not value or value is None:
+        if not value or value is None or value in ["--"]:
             self._country = None
         elif value and isinstance(value, str) and len(value) == 2:
-            if value in ["--"]:
-                self._country = None
-            else:
-                countries = CountriesLoader.get_countries()
-                country = countries.get_by_iso2(value.upper())  # type:ignore
-                self._set_string_attr(country.iso2, "country")
+            countries = CountriesLoader.get_countries()
+            country = countries.get_by_iso2(value.upper())  # type:ignore
+            self._set_string_attr(country.iso2, "country")
         else:
             try:
                 country = rg.get((self.lat, self.lon))["country_code"]
