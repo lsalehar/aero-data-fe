@@ -9,12 +9,15 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v2
 
       - name: Deploy to Reflex Cloud
         uses: reflex-dev/reflex-deploy-action@v1
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         with:
           auth_token: ${{ secrets.REFLEX_AUTH_TOKEN }}
           project_id: ${{ secrets.REFLEX_PROJECT_ID }}
-          extra_args: "--env SUPABASE_URL=${{ secrets.SUPABASE_URL }} --env SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}"
           python_version: "3.12"
