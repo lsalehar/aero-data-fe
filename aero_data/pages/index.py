@@ -51,7 +51,7 @@ def select_file(upload_id: str) -> rx.Component:
             "update_locations",
             default_checked=UpdateCupFile.update_locations,
             on_change=UpdateCupFile.set_update_locations,  # type:ignore
-            tooltip_content="If selected, we will update the airport location with the one from our database.",
+            tooltip_content="Updates the airport location with the one from our database.",
         ),
         switch(
             "Add missing airports",
@@ -59,7 +59,7 @@ def select_file(upload_id: str) -> rx.Component:
             default_checked=UpdateCupFile.add_missing,
             on_change=UpdateCupFile.set_add_missing,  # type:ignore
             tooltip_content=(
-                "If enabled, airports located within the bounding box of all waypoints in the uploaded CUP file "
+                "Airports located within the bounding box of all waypoints in the uploaded CUP file "
                 "will be automatically added to the updated file."
             ),
         ),
@@ -68,7 +68,7 @@ def select_file(upload_id: str) -> rx.Component:
             "delete_closed",
             default_checked=UpdateCupFile.delete_closed,
             on_change=UpdateCupFile.set_delete_closed,  # type:ignore
-            tooltip_content="If selected, we will remove closed airports from the cup file.",
+            tooltip_content="Remove closed airports from the cup file.",
         ),
         rx.flex(
             rx.button(
