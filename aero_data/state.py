@@ -32,6 +32,11 @@ class State(rx.State):
     def counter(self) -> int:
         return get_unique_visits()
 
+    @rx.var(cache=True)
+    def version(self) -> str:
+        config = rx.app.get_config()
+        return config.version  # type: ignore
+
 
 class UpdateCupFile(State):
     PRE_UPDATE = "pre-update"
