@@ -1,4 +1,5 @@
 import reflex as rx
+
 from aero_data.state import State
 
 
@@ -12,9 +13,9 @@ def header() -> rx.Component:
             color=rx.color("gray", 11),
         ),
         rx.cond(
-            State.current_page != "/",
-            rx.link("Home", href="/"),
+            State.current_page == "/",
             rx.link("Status", href="/status"),
+            rx.link("Home", href="/"),
         ),
         spacing="1",
     )

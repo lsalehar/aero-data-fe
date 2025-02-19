@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Optional
 
 import reflex as rx
+
 from aero_data.src.analytics import log_event
 from aero_data.src.db import get_last_update_and_details
 from aero_data.src.update_airports_in_cup import update_airports_in_cup
@@ -111,6 +112,7 @@ class UpdateCupFile(State):
 
 
 class DBStatus(State):
+    loading: bool = True
     report: dict[str, str] = {}
     _last_updated: Optional[datetime] = None
 
@@ -126,11 +128,19 @@ class DBStatus(State):
             return {}
         return {key.title(): value for key, value in self.report.items()}
 
-    def determine_status(self):
-        yield self.log_page_visit()
+    @rx.event
+    async def determine_status(self):
+        self.loading = True
+        yield
+
+        self.log_page_visit()
         data = get_last_update_and_details() or {}
+
         self.report = data.get("details", {})
         if data.get("timestamp"):
             self._last_updated = datetime.fromisoformat(data["timestamp"])
         else:
             self._last_updated = None
+
+        self.loading = False
+        yield
