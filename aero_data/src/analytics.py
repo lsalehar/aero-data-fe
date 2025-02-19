@@ -1,10 +1,10 @@
 import logging
 from typing import Optional
 
+import reflex as rx
 import supabase as sb
 from postgrest.types import ReturnMethod
 
-import reflex as rx
 from aero_data import db_client
 
 logger = logging.getLogger()
@@ -28,3 +28,12 @@ def log_event(
         ).execute()
     except Exception as e:
         logger.error(f"Failed to log event: {e}")
+
+
+def get_unique_visits(db_client: sb.Client = db_client) -> int:
+    try:
+        result = db_client.rpc("count_unique_page_visits").execute()
+        return result.data if result.data else 0
+    except Exception as e:
+        logger.error(f"Failed to get page visits: {e}")
+        return 0

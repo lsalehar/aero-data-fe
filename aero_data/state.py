@@ -6,7 +6,7 @@ from typing import Optional
 
 import reflex as rx
 
-from aero_data.src.analytics import log_event
+from aero_data.src.analytics import get_unique_visits, log_event
 from aero_data.src.db import get_last_update_and_details
 from aero_data.src.update_airports_in_cup import update_airports_in_cup
 from aero_data.utils.naviter.cup import CupFile
@@ -27,6 +27,10 @@ class State(rx.State):
 
     def log_event(self, event: str, event_details: dict = {}):
         log_event(event, self.router.session.session_id, event_details)
+
+    @rx.var(cache=True)
+    def counter(self) -> int:
+        return get_unique_visits()
 
 
 class UpdateCupFile(State):

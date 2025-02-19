@@ -1,6 +1,6 @@
 import reflex as rx
 
-from aero_data.components import header, main_container, switch, upload
+from aero_data.components import footer, header, main_container, switch, upload
 from aero_data.state import UpdateCupFile
 
 
@@ -141,7 +141,4 @@ def upload_form(upload_id: str) -> rx.Component:
 @rx.page(route="/", on_load=UpdateCupFile.log_page_visit)
 def index() -> rx.Component:
     upload_id = "upload_1"
-    return main_container(
-        header(),
-        upload_form(upload_id),
-    )
+    return main_container(header(), upload_form(upload_id), footer())

@@ -1,9 +1,8 @@
 from typing import List
 
 import reflex as rx
-from numpy import spacing
 
-from aero_data.components import header
+from aero_data.components import footer, header
 from aero_data.components.container import main_container
 from aero_data.state import DBStatus
 
@@ -57,4 +56,5 @@ def status() -> rx.Component:
             width="100%",
             spacing="1",
         ),
+        footer(),
     )
