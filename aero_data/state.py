@@ -13,7 +13,7 @@ from aero_data.utils.naviter.cup import CupFile
 
 
 class State(rx.State):
-    @rx.var
+    @rx.var(cache=False)
     def current_page(self) -> str:
         return self.router.page.path
 
@@ -116,13 +116,13 @@ class DBStatus(State):
     report: dict[str, str] = {}
     _last_updated: Optional[datetime] = None
 
-    @rx.var
+    @rx.var(cache=True)
     def last_updated(self) -> str:
         if self._last_updated:
             return self._last_updated.strftime("%d.%m.%Y @ %H:%M:%S %Z")
         return ""
 
-    @rx.var
+    @rx.var(cache=True)
     def pretty_report(self) -> dict:
         if not self.report:
             return {}
