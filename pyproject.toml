@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aero-data"
-version = "0.1.0"
+version = "0.2.1"
 description = ""
 authors = ["lsalehar <lsalehar@users.noreply.github.com>"]
 package-mode = false
@@ -15,6 +15,7 @@ cuid2 = "^2.0.1"
 python-dotenv = "^1.0.1"
 reverse-geocode = "^1.6.5"
 charset-normalizer = "^3.4"
+toml = "^0.10.2"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.10.0"
