@@ -20,7 +20,21 @@ def status() -> rx.Component:
         rx.vstack(
             rx.card(
                 rx.vstack(
-                    rx.heading("Airports DB", size="5"),
+                    rx.hstack(
+                        rx.heading("Airports DB", size="5"),
+                        rx.text(
+                            "Data from: ",
+                            rx.link(
+                                "OpenAIP",
+                                href="https://www.openaip.net",
+                            ),
+                            size="1",
+                            color_scheme="gray",
+                        ),
+                        width="100%",
+                        align="baseline",
+                        justify="between",
+                    ),
                     rx.text(
                         "Last updated:",
                         size="1",

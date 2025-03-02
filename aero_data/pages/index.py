@@ -72,6 +72,15 @@ def select_file(upload_id: str) -> rx.Component:
             tooltip_content="Remove closed airports from the cup file.",
         ),
         rx.flex(
+            rx.text(
+                "Data from: ",
+                rx.link(
+                    "OpenAIP",
+                    href="https://www.openaip.net",
+                ),
+                size="1",
+                color_scheme="gray",
+            ),
             rx.button(
                 "Update",
                 size="3",
@@ -82,7 +91,8 @@ def select_file(upload_id: str) -> rx.Component:
                 ),
             ),
             flex_grow=1,
-            justify="end",
+            align="end",
+            justify="between",
         ),
         direction="column",
         spacing="3",
