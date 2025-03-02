@@ -49,7 +49,7 @@ class UpdateCupFile(State):
     error_message: str = ""
     update_locations: bool = True
     add_missing: bool = True
-    delete_closed: bool = True
+    delete_closed: bool = False
     _zip_file: Optional[bytes] = None
 
     @rx.event
