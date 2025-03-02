@@ -10,6 +10,6 @@ The service will update the following fields:
 - Frequency
 
 **Options:**
-- *Update airport locations:* Updates the location of the airports stored in your CUP file, can cause your tasks to change. **ON by default**
+- *Update airport locations:* Updates the location (lat, lon) of the airports stored in your CUP file, can cause your tasks to change. **ON by default**
 - *Add missing airports:* This will create an imaginary rectangle around all your points and add airports that you might not have in your CUP.
 - *Remove closed airports:* This will remove any airports that are marked CLOSED in the OpenAIP from your file.
