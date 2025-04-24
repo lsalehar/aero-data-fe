@@ -7,4 +7,4 @@ def get_version():
     return pyproject_data["tool"]["poetry"]["version"]
 
 
-config = rx.Config(app_name="aero_data", version=get_version())
+config = rx.Config(app_name="aero_data", version=get_version(), show_built_with_reflex=False)
