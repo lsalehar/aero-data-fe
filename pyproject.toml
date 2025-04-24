@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aero-data"
-version = "0.2.2"
+version = "0.2.3"
 description = ""
 authors = ["lsalehar <lsalehar@users.noreply.github.com>"]
 package-mode = false
