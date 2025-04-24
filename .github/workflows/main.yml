@@ -1,9 +1,8 @@
 name: Deploy Aero Data Reflex
 
 on:
-  push:
-    branches:
-      - release
+  release:
+    types: [released]
 
 jobs:
   deploy:
