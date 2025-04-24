@@ -22,7 +22,7 @@ def log_event(
                 "event_type": event_type,
                 "event_details": event_details,
                 "session_id": sid,
-                "is_prod": rx.app.is_prod_mode(),
+                "is_prod": rx.app.is_prod_mode(),  # type: ignore
             },
             returning=ReturnMethod.minimal,
         ).execute()
@@ -36,4 +36,13 @@ def get_unique_visits(db_client: sb.Client = db_client) -> int:
         return result.data if result.data else 0
     except Exception as e:
         logger.error(f"Failed to get page visits: {e}")
+        return 0
+
+
+def get_nr_updates():
+    try:
+        result = db_client.rpc("count_cup_updates").execute()
+        return result.data if result.data else 0
+    except Exception as e:
+        logger.error(f"Failed to get # cup updates: {e}")
         return 0

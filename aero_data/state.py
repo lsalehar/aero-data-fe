@@ -6,7 +6,7 @@ from typing import Optional
 
 import reflex as rx
 
-from aero_data.src.analytics import get_unique_visits, log_event
+from aero_data.src.analytics import get_nr_updates, get_unique_visits, log_event
 from aero_data.src.db import get_last_update_and_details
 from aero_data.src.update_airports_in_cup import update_airports_in_cup
 from aero_data.utils.naviter.cup import CupFile
@@ -33,8 +33,12 @@ class State(rx.State):
         return get_unique_visits()
 
     @rx.var(cache=True)
+    def nr_updates(self) -> int:
+        return get_nr_updates()
+
+    @rx.var(cache=True)
     def version(self) -> str:
-        config = rx.app.get_config()
+        config = rx.app.get_config()  # type:ignore
         return config.version  # type: ignore
 
 
@@ -122,7 +126,7 @@ class UpdateCupFile(State):
 
 class DBStatus(State):
     loading: bool = True
-    report: dict[str, str] = {}
+    report: dict[str, int] = {}
     _last_updated: Optional[datetime] = None
 
     @rx.var(cache=True)
