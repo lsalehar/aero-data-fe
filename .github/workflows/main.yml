@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Deploy to Reflex Cloud
-        uses: reflex-dev/reflex-deploy-action@v1
+        uses: reflex-dev/reflex-deploy-action@v2
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
