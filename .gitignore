@@ -13,3 +13,4 @@ assets/external/
 raw_data/
 uploaded_files/
 outlandings/
+*.ipynb
