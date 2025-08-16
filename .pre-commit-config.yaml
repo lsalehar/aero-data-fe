@@ -1,0 +1,9 @@
+repos:
+- repo: local
+  hooks:
+  - id: update-requirements
+    name: Update requirements.txt
+    entry: bash -c 'uv export --no-hashes --no-header --no-annotate --no-dev --format requirements-txt > requirements.txt'
+    language: system
+    pass_filenames: false
+    always_run: true
