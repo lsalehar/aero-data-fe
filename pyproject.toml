@@ -9,7 +9,7 @@ dependencies = [
     "supabase>=2.10.0",
     "python-decouple>=3.8",
     "shapely>=2.0",
-    "reflex>=0.7",
+    "reflex>=0.8.12",
     "cuid2>=2.0.1",
     "python-dotenv>=1.0.1",
     "reverse-geocode>=1.6.5",
@@ -33,6 +33,16 @@ dev = [
 line-length = 96
 indent-width = 4
 target-version = "py312"
+select = ["ALL"]
+fixable = ["ALL"]
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".venv"
+]
+
+[tool.ruff.lint.pylint]
+max-args = 7
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["E402"]

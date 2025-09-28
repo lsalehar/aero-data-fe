@@ -1,5 +1,5 @@
 {
-    "python.languageServer": "Pylance",
+    "python.languageServer": "None",
     "python.analysis.autoSearchPaths": true,
     "python.analysis.autoImportCompletions": false,
     "python.analysis.typeCheckingMode": "standard",
@@ -14,5 +14,8 @@
     },
     "ruff.enable": true,
     "ruff.fixAll": true,
-    "ruff.organizeImports": true
+    "ruff.organizeImports": true,
+    "cursorpyright.analysis.autoImportCompletions": false,
+    "cursorpyright.analysis.autoSearchPaths": true,
+    "cursorpyright.analysis.typeCheckingMode": "standard"
 }
