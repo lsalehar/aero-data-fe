@@ -7,4 +7,9 @@ def get_version():
     return pyproject_data["project"]["version"]
 
 
-config = rx.Config(app_name="aero_data", version=get_version(), show_built_with_reflex=False)  # pyright: ignore[reportCallIssue]
+config = rx.Config(
+    app_name="aero_data",
+    version=get_version(),
+    show_built_with_reflex=False,
+    disable_plugins=["reflex.plugins.sitemap.SitemapPlugin"],
+)  # pyright: ignore[reportCallIssue]
