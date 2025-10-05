@@ -140,41 +140,41 @@ if [[ "${DEPLOY_ONLY}" != "true" ]]; then
 
   # 5) Commit, tag, push
   tag="v${new_version}"
-  bold "Committing version bump and requirements, creating tag ${tag}..."
+  bold "Committing version bump and requirements, creating tag ${tag} (no push yet)..."
   if [[ "${DRY_RUN}" == "true" ]]; then
     echo "(dry-run) Would git add pyproject.toml requirements.txt"
-    echo "(dry-run) Would git commit -m 'chore(release): ${tag}'"
+    echo "(dry-run) Would git commit -m 'Release & Deploy: ${tag}'"
     echo "(dry-run) Would git tag -a '${tag}' -m 'Release ${tag}'"
-    if [[ "${NO_PUSH}" != "true" ]]; then
-      echo "(dry-run) Would git push && git push --tags"
-    else
-      echo "(dry-run) Would skip pushing (--no-push)"
-    fi
   else
     git add pyproject.toml requirements.txt uv.lock
     git commit -m "Release & Deploy: ${tag}" || true
     git tag -a "${tag}" -m "Release ${tag}"
-    if [[ "${NO_PUSH}" != "true" ]]; then
-      git push
-      git push --tags
-    else
-      bold "--no-push: Skipping git push."
-    fi
   fi
 else
   bold "--deploy-only: Skipping version bump, requirements compile, and tagging."
 fi
 
-# 6) Deploy with Reflex
+# 6) Deploy with Reflex, then push commit/tag IFF deploy succeeds
 if [[ "${NO_DEPLOY}" == "true" || "${DRY_RUN}" == "true" ]]; then
   bold "Skipping deploy (${NO_DEPLOY:+--no-deploy }${DRY_RUN:+--dry-run})."
+  if [[ "${DRY_RUN}" == "true" ]]; then
+    echo "(dry-run) Would push commit and tag only after successful deploy"
+  fi
 else
   bold "Running Reflex deploy..."
   deploy_cmd=(uv run reflex deploy)
-  if [[ -f .env ]]; then
-    deploy_cmd=(uv run reflex deploy --env-file .env)
+  if "${deploy_cmd[@]}"; then
+    if [[ "${DEPLOY_ONLY}" != "true" && "${NO_PUSH}" != "true" ]]; then
+      bold "Deploy succeeded. Pushing commit and tag..."
+      git push
+      git push --tags
+    else
+      bold "Deploy succeeded. Skipping push (${DEPLOY_ONLY:+--deploy-only }${NO_PUSH:+--no-push})."
+    fi
+  else
+    err "Deploy failed. Commit and tag were NOT pushed."
+    exit 1
   fi
-  "${deploy_cmd[@]}"
 fi
 
 bold "Done."
