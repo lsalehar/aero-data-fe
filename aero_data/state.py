@@ -2,6 +2,7 @@ import io
 import os
 import zipfile
 from datetime import datetime
+from typing import ClassVar
 
 import reflex as rx
 
@@ -24,7 +25,9 @@ class State(rx.State):
             {"page_name": self.current_page},
         )
 
-    def log_event(self, event: str, event_details: dict = {}):
+    def log_event(self, event: str, event_details: dict | None = None):
+        if event_details is None:
+            event_details = {}
         log_event(event, self.router.session.session_id, event_details)
 
     @rx.var(cache=True)
@@ -37,8 +40,8 @@ class State(rx.State):
 
     @rx.var(cache=True)
     def version(self) -> str:
-        config = rx.app.get_config()  # type:ignore
-        return config.version  # type: ignore
+        config = rx.app.get_config()
+        return config.version
 
 
 class UpdateCupFile(State):
@@ -46,6 +49,7 @@ class UpdateCupFile(State):
     RUNNING = "running"
     DONE = "done"
     ERROR = "error"
+    NO_ZIP_ERROR = "No ZIP file available for download"
 
     stage: str = PRE_UPDATE
     file_name: str = ""
@@ -120,7 +124,7 @@ class UpdateCupFile(State):
     @rx.event
     def download_zip(self):
         if not self._zip_file:
-            raise ValueError("No ZIP file avaialable for download")
+            raise ValueError(self.NO_ZIP_ERROR)
 
         updated_name = f"{self.file_name.replace('.cup', '')}_updated.zip"
 
@@ -133,9 +137,9 @@ class UpdateCupFile(State):
 
 
 class DBStatus(State):
-    loading: bool = True
-    report: dict[str, int] = {}
-    _last_updated: datetime | None = None
+    loading: ClassVar[bool] = True
+    report: ClassVar[dict[str, int]] = {}
+    _last_updated: ClassVar[datetime | None] = None
 
     @rx.var(cache=True)
     def last_updated(self) -> str:
