@@ -58,6 +58,9 @@ class UpdateCupFile(State):
     add_missing: bool = True
     delete_closed: bool = False
     _zip_file: bytes | None = None
+    counts: ClassVar[dict[str, int]] = {}
+    report_text: str = ""
+    report_open: bool = False
 
     def set_update_locations(self, value: bool):
         self.update_locations = value
@@ -67,6 +70,26 @@ class UpdateCupFile(State):
 
     def set_delete_closed(self, value: bool):
         self.delete_closed = value
+
+    @rx.var(cache=True)
+    def updated_count(self) -> int:
+        return int(self.counts.get("updated", 0))
+
+    @rx.var(cache=True)
+    def added_count(self) -> int:
+        return int(self.counts.get("added", 0))
+
+    @rx.var(cache=True)
+    def deleted_count(self) -> int:
+        return int(self.counts.get("deleted", 0))
+
+    @rx.var(cache=True)
+    def not_found_count(self) -> int:
+        return int(self.counts.get("not_found", 0))
+
+    @rx.var(cache=True)
+    def not_updated_count(self) -> int:
+        return int(self.counts.get("not_updated", 0))
 
     @rx.event
     def reset_state(self, upload_id: str):
@@ -89,9 +112,11 @@ class UpdateCupFile(State):
                 self.file_name = os.path.basename(file_name)
 
             if data:
-                self.log_event("upload", {"file_name": file.filename, "file_size": file.size})
+                self.log_event(
+                    "upload", {"file_name": file.filename, "file_size": file.size}
+                )
 
-            updated_file, report = update_airports_in_cup(
+            updated_file, report, counts = update_airports_in_cup(
                 data,
                 self.file_name,
                 fix_location=self.update_locations,
@@ -102,6 +127,7 @@ class UpdateCupFile(State):
             updated_file_name = self.file_name.replace(".cup", "-updated.cup")
             self.log_event("cup_updated", {"file_name": updated_file_name})
 
+            self.counts = counts
             self._zip_file = self.create_zip(updated_file, updated_file_name, report)
 
             self.stage = self.DONE
@@ -112,7 +138,9 @@ class UpdateCupFile(State):
             self.log_event("upload_error", {"error": self.error_message})
             yield
 
-    def create_zip(self, updated_file: CupFile, updated_file_name: str, report: str) -> bytes:
+    def create_zip(
+        self, updated_file: CupFile, updated_file_name: str, report: str
+    ) -> bytes:
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
             zip_file.writestr(updated_file_name, updated_file.dumps())
@@ -135,11 +163,36 @@ class UpdateCupFile(State):
 
         yield rx.download(filename=updated_name, data=self._zip_file)
 
+    @rx.event
+    def open_report(self):
+        self.report_open = True
+
+    @rx.event
+    def close_report(self):
+        self.report_open = False
+
+    @rx.event
+    def download_sample(self):
+        sample_path = os.path.normpath(
+            os.path.join(os.path.dirname(__file__), "..", "assets", "sample.cup")
+        )
+        if not os.path.exists(sample_path):
+            raise FileNotFoundError("Sample CUP file not found.")
+        with open(sample_path, "rb") as fh:
+            data = fh.read()
+        yield rx.download(filename="sample.cup", data=data)
+
+    @rx.event
+    def download_report(self):
+        if not self.report_text:
+            raise ValueError("No report available")
+        yield rx.download(filename="update_report.txt", data=self.report_text.encode())
+
 
 class DBStatus(State):
-    loading: ClassVar[bool] = True
-    report: ClassVar[dict[str, int]] = {}
-    _last_updated: ClassVar[datetime | None] = None
+    loading: bool = True
+    report: dict[str, int] = {}
+    _last_updated: datetime | None = None
 
     @rx.var(cache=True)
     def last_updated(self) -> str:

@@ -31,5 +31,4 @@ def header() -> rx.Component:
         position="sticky",
         top="0",
         z_index="10",
-        background_color=rx.color("gray", 1),
     )

@@ -4,22 +4,37 @@ from aero_data.components import footer, header, main_container, switch, upload
 from aero_data.state import UpdateCupFile
 
 
+def metric(label: str, value: rx.Var | str | int) -> rx.Component:  # type: ignore
+    return rx.card(
+        rx.vstack(
+            rx.text(label, size="1", color=rx.color("gray", 11)),
+            rx.heading(value, size="6"),
+            spacing="1",
+            align="start",
+        ),
+        padding="0.75rem",
+    )
+
+
 def update_airports_card(*children) -> rx.Component:
     return rx.card(
         rx.flex(
             rx.hstack(
+                rx.vstack(
+                    rx.heading(
+                        "Update airports in your CUP file", size="4", weight="bold"
+                    ),
+                    rx.text("Fill the form to get an updated file", size="3"),
+                    spacing="1",
+                    height="100%",
+                    width="100%",
+                    align_items="start",
+                ),
                 rx.badge(
                     rx.icon(tag="plane-landing", size=32),
                     color_scheme="blue",
                     radius="full",
                     padding="0.65rem",
-                ),
-                rx.vstack(
-                    rx.heading("Update airports in your CUP file", size="4", weight="bold"),
-                    rx.text("Fill the form to get an updated file", size="3"),
-                    spacing="1",
-                    height="100%",
-                    align_items="start",
                 ),
                 height="100%",
                 spacing="4",
@@ -33,6 +48,7 @@ def update_airports_card(*children) -> rx.Component:
         ),
         size="2",
         width="100%",
+        background_color=rx.color("white", 1),
     )
 
 
@@ -46,6 +62,17 @@ def select_file(upload_id: str) -> rx.Component:
                 rx.button("select", size="3", variant="ghost"),
                 " a CUP file.",
             ),
+        ),
+        rx.hstack(
+            rx.text("Accepted: .cup", size="1", color=rx.color("gray", 11)),
+            rx.button(
+                "Try a sample file",
+                size="1",
+                variant="soft",
+                on_click=UpdateCupFile.download_sample,
+            ),
+            align="center",
+            spacing="3",
         ),
         switch(
             "Update airport locations",
@@ -103,24 +130,78 @@ def upload_form(upload_id: str) -> rx.Component:
     return update_airports_card(
         rx.match(
             UpdateCupFile.stage,
-            (UpdateCupFile.RUNNING, rx.text("Updating...", align="center")),
+            (
+                UpdateCupFile.RUNNING,
+                rx.center(
+                    rx.vstack(
+                        rx.spinner(size="3"),
+                        rx.text("Updating...", size="2", color=rx.color("gray", 11)),
+                        spacing="2",
+                    ),
+                    min_height="8rem",
+                ),
+            ),
             (
                 UpdateCupFile.DONE,
-                rx.flex(
-                    rx.button(
-                        "Back",
-                        variant="outline",
-                        on_click=UpdateCupFile.reset_state(upload_id),
-                        flex_grow=1,
+                rx.vstack(
+                    rx.card(
+                        rx.hstack(
+                            rx.icon("check", color=rx.color("green", 9)),
+                            rx.heading("Update complete", size="4"),
+                            justify="start",
+                            spacing="2",
+                        ),
+                        rx.hstack(
+                            metric("Updated", UpdateCupFile.updated_count),
+                            metric("Added", UpdateCupFile.added_count),
+                            metric("Deleted", UpdateCupFile.deleted_count),
+                            metric("Not found", UpdateCupFile.not_found_count),
+                            metric("Not updated", UpdateCupFile.not_updated_count),
+                            spacing="3",
+                            wrap="wrap",
+                        ),
+                        width="100%",
                     ),
-                    rx.button(
-                        "Download updated file.",
-                        on_click=UpdateCupFile.download_zip,
-                        flex_grow=1,
+                    rx.hstack(
+                        rx.button(
+                            "Back",
+                            variant="outline",
+                            on_click=UpdateCupFile.reset_state(upload_id),
+                            flex_grow=1,
+                        ),
+                        rx.button(
+                            "Download updated file",
+                            on_click=UpdateCupFile.download_zip,
+                            flex_grow=1,
+                        ),
+                        rx.dialog.root(
+                            rx.dialog.trigger(rx.button("View report", variant="soft")),
+                            rx.dialog.content(
+                                rx.dialog.title("Update report"),
+                                rx.scroll_area(
+                                    rx.code(
+                                        UpdateCupFile.report_text,
+                                        width="100%",
+                                        max_height="50vh",
+                                    )
+                                ),
+                                rx.hstack(
+                                    rx.button(
+                                        "Download report",
+                                        on_click=UpdateCupFile.download_report,
+                                        variant="soft",
+                                    ),
+                                    rx.dialog.close(
+                                        rx.button("Close", variant="outline")
+                                    ),
+                                    justify="end",
+                                    spacing="3",
+                                ),
+                            ),
+                        ),
+                        width="100%",
+                        spacing="4",
                     ),
-                    flex_grow=1,
-                    direction="row",
-                    spacing="4",
                 ),
             ),
             (

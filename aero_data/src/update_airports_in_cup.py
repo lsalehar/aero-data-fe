@@ -25,7 +25,7 @@ Updated on: {datetime.now(UTC).isoformat(timespec="minutes")}
 # General
 Before the update the file had:
 {counts["total_wpts_before"]} total waypoints
-{counts['total_apts_before']} airports
+{counts["total_apts_before"]} airports
 
 We search for candidates in the OpenAip DB with a radius of {search_r}m around the point of the 
 airport stored in the CUP file. The airport is updated if the distance between the point of the 
@@ -107,7 +107,9 @@ def parse_annotated_airports(results: list[dict]) -> dict[int, AirportDistance |
     }
 
 
-def update_cup_waypoint(waypoint1: CupWaypoint, waypoint2: CupWaypoint, attrs: tuple | list):
+def update_cup_waypoint(
+    waypoint1: CupWaypoint, waypoint2: CupWaypoint, attrs: tuple | list
+):
     """
     Update attributes of a CUP waypoint based on another waypoint.
 
@@ -144,14 +146,15 @@ def update_airports_in_cup(
         delete_closed (bool): Whether to delete closed airports.
 
     Returns:
-        tuple: Updated CUP file and a report.
+        tuple: (CupFile, report_text, counts_dict, data_report_dict)
     """
 
     # Setup
     data_report = defaultdict(list)
     counts = defaultdict(int)
     tresholds = [
-        (dist, f"distance_lte_{dist}m") for dist in range(500, (update_r // 500) * 500, 500)
+        (dist, f"distance_lte_{dist}m")
+        for dist in range(500, (update_r // 500) * 500, 500)
     ]
 
     fields = (
@@ -217,7 +220,11 @@ def update_airports_in_cup(
                 elif delete_closed:
                     cup_file.waypoints.remove(apt_in_cup)
                     data_report["deleted"].append(
-                        (deepcopy(apt_in_cup), closest_apt.to_cup(), closest_apt.distance)
+                        (
+                            deepcopy(apt_in_cup),
+                            closest_apt.to_cup(),
+                            closest_apt.distance,
+                        )
                     )
 
             else:
@@ -252,9 +259,11 @@ def update_airports_in_cup(
     counts["total_wpts_after"] = len(cup_file.waypoints)
     counts["total_apts_after"] = len(cup_file.airports())
 
-    report = generate_report(cup_file.file_name, counts, data_report, search_r, update_r)
+    report = generate_report(
+        cup_file.file_name, counts, data_report, search_r, update_r
+    )
 
-    return cup_file, report
+    return cup_file, report, dict(counts), {k: list(v) for k, v in data_report.items()}
 
 
 if __name__ == "__main__":
@@ -264,7 +273,9 @@ if __name__ == "__main__":
     print(os.getcwd())
     with open(file_path, "rb") as f:
         cup_file = f.read()
-    cup_file, report = update_airports_in_cup(cup_file, fn, delete_closed=True, add_new=True)
+    cup_file, report = update_airports_in_cup(
+        cup_file, fn, delete_closed=True, add_new=True
+    )
     cup.dump(cup_file, f"{fp}/{fn}_updated.cup")
     with open(f"{fp}/{fn}_report.txt", "w") as f:
         f.write(report)
