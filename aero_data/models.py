@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List, Optional
 
 from postgrest.base_request_builder import APIResponse
 from pydantic import BaseModel
@@ -18,12 +17,12 @@ class Country(BaseModel):
     name: str
     iso2: str
     iso3: str
-    local_name: Optional[str] = None
-    region: Optional[str] = None
+    local_name: str | None = None
+    region: str | None = None
 
 
 class Countries(BaseModel):
-    countries: List[Country] = []
+    countries: list[Country] = []
 
     @classmethod
     def populate_data(cls, response: APIResponse) -> "Countries":
@@ -64,14 +63,14 @@ class Airport(AeroDataModel):
         style: int,
         apt_type: AirportType,
         source_id: str,
-        id: Optional[int] = None,
-        code: Optional[str] = None,
-        rw_dir: Optional[int] = None,
-        rw_len: Optional[int] = None,
-        rw_width: Optional[int] = None,
-        freq: Optional[str] = None,
-        created_at: Optional[datetime] = None,
-        updated_at: Optional[datetime] = None,
+        id: int | None = None,
+        code: str | None = None,
+        rw_dir: int | None = None,
+        rw_len: int | None = None,
+        rw_width: int | None = None,
+        freq: str | None = None,
+        created_at: datetime | None = None,
+        updated_at: datetime | None = None,
     ):
         self.id = id
         self.name = name
@@ -116,7 +115,7 @@ class Airport(AeroDataModel):
 
         self._location = parsed
 
-    def to_dict(self, exclude: Optional[List[str]] = []):
+    def to_dict(self, exclude: list[str] | None = []):
         apt_dict = {
             "id": self.id,
             "name": self.name,
@@ -136,8 +135,7 @@ class Airport(AeroDataModel):
         }
         if exclude:
             return {k: v for k, v in apt_dict.items() if k not in exclude}
-        else:
-            return apt_dict
+        return apt_dict
 
     def to_db_dict(self):
         return {
@@ -178,8 +176,8 @@ class Airport(AeroDataModel):
             "apt_type": AirportType(apt_json.get("apt_type", 999)),
             "country": countries.get_by_iso2(apt_json.get("country", "")),
             "location": wkb.loads(apt_json.get("location", "")),
-            "created_at": datetime.fromisoformat(apt_json.get("created_at", None)),
-            "updated_at": datetime.fromisoformat(apt_json.get("updated_at", None)),
+            "created_at": datetime.fromisoformat(apt_json.get("created_at")),
+            "updated_at": datetime.fromisoformat(apt_json.get("updated_at")),
         }
         return apt
 

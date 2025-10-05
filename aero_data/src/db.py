@@ -24,9 +24,8 @@ def get_last_update(category: str = "airports") -> datetime | None:
         )
         if response.data:
             return datetime.fromisoformat(response.data[0]["timestamp"])
-        else:
-            logger.warning("No updates for airports found.")
-            return None
+        logger.warning("No updates for airports found.")
+        return None
     except APIError as e:
         logger.exception(f"Exception occurred while fetching last update: {e}")
         return None
@@ -47,9 +46,8 @@ def get_last_update_and_details(category: str = "airports") -> dict | None:
         )
         if response.data:
             return response.data[0]
-        else:
-            logger.warning("No updates for airports found.")
-            return None
+        logger.warning("No updates for airports found.")
+        return None
     except APIError as e:
         logger.exception(f"Exception occurred while fetching last update: {e}")
         return None

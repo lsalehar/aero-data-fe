@@ -2,7 +2,8 @@ import csv
 import io
 import logging
 import os
-from typing import Any, Iterable, List, Optional, Tuple
+from collections.abc import Iterable
+from typing import Any
 
 from charset_normalizer import from_bytes
 
@@ -39,7 +40,7 @@ class CupFile:
     def __init__(self, file_name: str | None = None):
         self.file_name: str | None = file_name
         self._waypoints: Waypoints = Waypoints()
-        self._tasks: List[str] = []
+        self._tasks: list[str] = []
 
     @property
     def waypoints(self) -> Waypoints:
@@ -52,7 +53,7 @@ class CupFile:
             with open(file_path, "rb") as file_obj:
                 content = file_obj.read()
             return self.loads(content)
-        except IOError as e:
+        except OSError as e:
             logger.error(f"Error while reading file {file_path}: {e}")
             return self
 
@@ -151,11 +152,11 @@ class CupFile:
     def outlandings(self) -> list:
         return list(filter(lambda wpt: wpt.style == 3, self.waypoints))
 
-    def get_bbox(self) -> Tuple[float, float, float, float] | None:
+    def get_bbox(self) -> tuple[float, float, float, float] | None:
         if not self.waypoints:
             return None
 
-        x, y = zip(*[(wpt.lat, wpt.lon) for wpt in self.waypoints])
+        x, y = zip(*[(wpt.lat, wpt.lon) for wpt in self.waypoints], strict=False)
 
         return (min(x), min(y), max(x), max(y))
 
@@ -168,7 +169,7 @@ def loads(content: str | bytes) -> CupFile:
     return CupFile().loads(content)
 
 
-def dump(cup_file: CupFile, file_path: Optional[str] = None) -> CupFile:
+def dump(cup_file: CupFile, file_path: str | None = None) -> CupFile:
     if file_path:
         cup_file.dump(file_path)
     else:

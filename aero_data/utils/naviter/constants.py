@@ -17,9 +17,9 @@ CUP_FIELDS = (
     "pics",
 )
 
-CUP_DISTANCE_REGEX = re.compile(r"([-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)(ft|m|nm|ml)", re.I)
-CUP_LAT_REGEX = re.compile(r"(\d{2})(\d{2}\.\d{1,3})(n|s)", re.I)
-CUP_LON_REGEX = re.compile(r"(\d{3})(\d{2}\.\d{1,3})(e|w)", re.I)
+CUP_DISTANCE_REGEX = re.compile(r"([-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)(ft|m|nm|ml)", re.IGNORECASE)
+CUP_LAT_REGEX = re.compile(r"(\d{2})(\d{2}\.\d{1,3})(n|s)", re.IGNORECASE)
+CUP_LON_REGEX = re.compile(r"(\d{3})(\d{2}\.\d{1,3})(e|w)", re.IGNORECASE)
 CUP_FREQ_REGEX = re.compile(r"^(118|119|12[0-9]|13[0-6])\.(?:\d{2}[05]|\d{2}|\d)$|")
 
 CUP_LAT_FORMAT = "{deg:02d}{dec_min:06.3f}{dir}"

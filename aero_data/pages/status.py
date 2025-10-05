@@ -1,4 +1,3 @@
-from typing import List
 
 import reflex as rx
 
@@ -7,7 +6,7 @@ from aero_data.components.container import main_container
 from aero_data.state import DBStatus
 
 
-def print_report(item: List) -> rx.Component:
+def print_report(item: list) -> rx.Component:
     return rx.text(
         f"{item[0]}:", rx.text(f"{item[1]}", color=rx.color("gray", 12), size="2"), size="1"
     )

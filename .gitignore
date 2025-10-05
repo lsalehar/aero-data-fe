@@ -1,4 +1,6 @@
 .states
+.ruff_cache
+
 *.db
 *.py[cod]
 .web

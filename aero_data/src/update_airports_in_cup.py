@@ -1,8 +1,7 @@
 import os
 from collections import defaultdict
 from copy import deepcopy
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from more_itertools import chunked
 from shapely import MultiPoint
@@ -20,7 +19,7 @@ def generate_report(
     report = f"""
 ############################################################
 Report for: {file_name or "Unknown File Name"}
-Updated on: {datetime.now(timezone.utc).isoformat(timespec="minutes")}
+Updated on: {datetime.now(UTC).isoformat(timespec="minutes")}
 ############################################################
 
 # General
@@ -79,12 +78,12 @@ After update the file has:
 
 
 class AirportDistance(Airport):
-    def __init__(self, distance: Optional[float] = None, **kwargs):
+    def __init__(self, distance: float | None = None, **kwargs):
         super().__init__(**kwargs)
         self.distance = distance
 
 
-def parse_annotated_airports(results: list[dict]) -> dict[int, Optional[AirportDistance]]:
+def parse_annotated_airports(results: list[dict]) -> dict[int, AirportDistance | None]:
     """
     Parse results from bulk query into AirportDistance objects.
 
@@ -192,7 +191,7 @@ def update_airports_in_cup(
     seen_ids = []
 
     for point_chunk, apt_chunk in zip(
-        chunked(points, chunk_size), chunked(airports_in_cup, chunk_size)
+        chunked(points, chunk_size), chunked(airports_in_cup, chunk_size), strict=False
     ):
         result = get_nearest_airport_bulk(point_chunk, search_r)  # type:ignore
         airports_from_db = parse_annotated_airports(result)  # type:ignore
@@ -215,12 +214,11 @@ def update_airports_in_cup(
                         if closest_apt.distance <= threshold:
                             counts[key] += 1
                             break
-                else:
-                    if delete_closed:
-                        cup_file.waypoints.remove(apt_in_cup)
-                        data_report["deleted"].append(
-                            (deepcopy(apt_in_cup), closest_apt.to_cup(), closest_apt.distance)
-                        )
+                elif delete_closed:
+                    cup_file.waypoints.remove(apt_in_cup)
+                    data_report["deleted"].append(
+                        (deepcopy(apt_in_cup), closest_apt.to_cup(), closest_apt.distance)
+                    )
 
             else:
                 data_report["not_updated"].append(

@@ -1,7 +1,6 @@
 from math import inf
 
 import pytest
-
 from utils.naviter.helpers import format_dd_lat_lon_to_cup
 from utils.naviter.waypoint import (
     convert_distance_to_m_and_og_unit,

@@ -60,8 +60,7 @@ def format_decimal_degrees_to_cup(decimal_degrees: float, is_lat=False) -> str:
 
     if is_lat:
         return CUP_LAT_FORMAT.format(deg=degrees, dec_min=decimal_minutes, dir=direction)
-    else:
-        return CUP_LON_FORMAT.format(deg=degrees, dec_min=decimal_minutes, dir=direction)
+    return CUP_LON_FORMAT.format(deg=degrees, dec_min=decimal_minutes, dir=direction)
 
 
 def format_dd_lat_lon_to_cup(lat, lon):

@@ -3,5 +3,5 @@ regions:
   fra: 1
 vmtype: c1m1
 hostname: null
-envfile: null
+envfile: .env
 project: 1dc4a70e-0346-48a0-9528-8e6f57f9b444

@@ -1,4 +1,3 @@
-from typing import Optional
 
 import reflex as rx
 
@@ -7,7 +6,7 @@ def switch(
     label: str,
     id_: str,
     default_checked: bool | rx.Var[bool] = False,
-    tooltip_content: Optional[str] = None,
+    tooltip_content: str | None = None,
     on_change: rx.EventHandler | None = None,
 ) -> rx.Component:
     children = [

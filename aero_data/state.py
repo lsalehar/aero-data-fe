@@ -2,7 +2,6 @@ import io
 import os
 import zipfile
 from datetime import datetime
-from typing import Optional
 
 import reflex as rx
 
@@ -15,7 +14,7 @@ from aero_data.utils.naviter.cup import CupFile
 class State(rx.State):
     @rx.var(cache=False)
     def current_page(self) -> str:
-        return self.router.page.path
+        return self.router.url.path
 
     @rx.event
     def log_page_visit(self):
@@ -54,7 +53,16 @@ class UpdateCupFile(State):
     update_locations: bool = True
     add_missing: bool = True
     delete_closed: bool = False
-    _zip_file: Optional[bytes] = None
+    _zip_file: bytes | None = None
+
+    def set_update_locations(self, value: bool):
+        self.update_locations = value
+
+    def set_add_missing(self, value: bool):
+        self.add_missing = value
+
+    def set_delete_closed(self, value: bool):
+        self.delete_closed = value
 
     @rx.event
     def reset_state(self, upload_id: str):
@@ -127,7 +135,7 @@ class UpdateCupFile(State):
 class DBStatus(State):
     loading: bool = True
     report: dict[str, int] = {}
-    _last_updated: Optional[datetime] = None
+    _last_updated: datetime | None = None
 
     @rx.var(cache=True)
     def last_updated(self) -> str:

@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 import reflex as rx
 import supabase as sb
@@ -13,7 +12,7 @@ logger = logging.getLogger()
 def log_event(
     event_type: str,
     sid: str,
-    event_details: Optional[dict] = None,
+    event_details: dict | None = None,
     db_client: sb.Client = db_client,
 ):
     try:

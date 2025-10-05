@@ -30,7 +30,7 @@ def upload(
             on_drop=drop_handler,
             id=id_,
             border=f"1px solid {rx.color('blue', shade=7)}",
-            background_color=rx.color('blue', shade=2),
+            background_color=rx.color("blue", shade=2),
             height="3rem",
             border_radius="0.25rem",
             padding="0",

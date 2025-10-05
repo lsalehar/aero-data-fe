@@ -1,6 +1,7 @@
 import csv
+from collections.abc import Callable
 from io import StringIO
-from typing import Any, Callable, Optional
+from typing import Any
 
 import reverse_geocode as rg
 from cuid2 import Cuid
@@ -44,17 +45,17 @@ class CupWaypoint:
         name: str,
         lat: str | float,
         lon: str | float,
-        code: Optional[str] = None,
-        country: Optional[str] = None,
-        elev: Optional[str | float] = None,
-        style: Optional[str | int] = None,
-        rwdir: Optional[str | int] = None,
-        rwlen: Optional[str | float] = None,
-        rwwidth: Optional[str | float] = None,
-        freq: Optional[str] = None,
-        userdata: Optional[str] = None,
-        desc: Optional[str] = None,
-        pics: Optional[str] = None,
+        code: str | None = None,
+        country: str | None = None,
+        elev: str | float | None = None,
+        style: str | int | None = None,
+        rwdir: str | int | None = None,
+        rwlen: str | float | None = None,
+        rwwidth: str | float | None = None,
+        freq: str | None = None,
+        userdata: str | None = None,
+        desc: str | None = None,
+        pics: str | None = None,
     ) -> None:
         if not name:
             raise ValueError("Waypoint requires a name")
@@ -239,7 +240,7 @@ class CupWaypoint:
                 setattr(self, storage_attr, converted_value)
                 setattr(self, og_unit_attr, original_unit)
             except ValueError as e:
-                raise ValueError(f"Invalid value for '{attr_name}': {value}. {str(e)}")
+                raise ValueError(f"Invalid value for '{attr_name}': {value}. {e!s}")
         elif isinstance(value, (int, float)):
             setattr(self, storage_attr, value)
             # Assuming the value is given in meters if directly a number
@@ -250,7 +251,7 @@ class CupWaypoint:
             )
 
     def _set_string_attr(
-        self, value, attr_name: str, vali_fn: Optional[Callable[[str], bool]] = None
+        self, value, attr_name: str, vali_fn: Callable[[str], bool] | None = None
     ):
         storage_attr = f"_{attr_name}"
         if not value:
@@ -266,7 +267,7 @@ class CupWaypoint:
             )
 
     def _set_integer_attr(
-        self, value: Any, attr_name: str, vali_fn: Optional[Callable[[int | str], bool]] = None
+        self, value: Any, attr_name: str, vali_fn: Callable[[int | str], bool] | None = None
     ):
         storage_attr = f"_{attr_name}"
         if not value or value is None:
@@ -293,9 +294,9 @@ class CupWaypoint:
     def _format_attr(self, attr):
         if attr in ("lat", "lon"):
             return format_decimal_degrees_to_cup(getattr(self, attr), is_lat=(attr == "lat"))
-        elif attr in ("elev", "rwlen", "rwwidth"):
+        if attr in ("elev", "rwlen", "rwwidth"):
             return format_distance(getattr(self, attr), getattr(self, f"_og_{attr}_unit", "m"))
-        elif getattr(self, attr) is None:
+        if getattr(self, attr) is None:
             return ""
         return str(getattr(self, attr)) or ""
 

@@ -1,7 +1,6 @@
 import django
 import pytest
 from django.conf import settings
-
 from utils.naviter.waypoint import CupWaypoint
 
 if not settings.configured:
