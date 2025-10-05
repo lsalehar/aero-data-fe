@@ -114,7 +114,7 @@ class UpdateCupFile(State):
         if not self._zip_file:
             raise ValueError("No ZIP file avaialable for download")
 
-        updated_name = f"{self.file_name.replace(".cup", "")}_updated.zip"
+        updated_name = f"{self.file_name.replace('.cup', '')}_updated.zip"
 
         self.log_event(
             "download_update_package",

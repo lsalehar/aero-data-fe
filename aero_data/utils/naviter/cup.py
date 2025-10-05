@@ -20,7 +20,7 @@ class Waypoints(list):
 
     def extend(self, iterable: Iterable):
         for item in iterable:
-            if isinstance(item, CupWaypoint):
+            if not isinstance(item, CupWaypoint):
                 raise TypeError(f"All items must be CupWaypoint, got {type(item)}")
         super().extend(iterable)
 
@@ -57,16 +57,21 @@ class CupFile:
             return self
 
     def loads(self, data: bytes | str):
+        content: str
         if isinstance(data, bytes):
             results = from_bytes(data)
-            content = None
+            chosen: str | None = None
             for result in results:
-                if result.chaos == 0 and result.encoding.startswith(("cp", "iso")):
-                    content = str(result)
+                enc = getattr(result, "encoding", None)
+                if result.chaos == 0 and isinstance(enc, str) and enc.lower().startswith(("cp", "iso")):
+                    chosen = str(result)
                     break
-
-        if content is None:
-            content = str(results.best())
+            content = chosen if chosen is not None else str(results.best())
+        elif isinstance(data, str):
+            # Treat input as already-decoded file content
+            content = data
+        else:
+            raise TypeError(f"Unsupported data type for loads: {type(data)}")
 
         lines = content.splitlines()
         reader = csv.reader(lines, delimiter=",", quotechar='"')
