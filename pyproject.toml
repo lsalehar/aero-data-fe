@@ -1,6 +1,6 @@
 [project]
 name = "aero-data"
-version = "0.2.6"
+version = "0.2.7"
 description = ""
 authors = [
     {name = "lsalehar", email = "lsalehar@users.noreply.github.com"}
