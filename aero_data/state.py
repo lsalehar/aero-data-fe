@@ -1,3 +1,4 @@
+import asyncio
 import io
 import os
 import zipfile
@@ -102,19 +103,28 @@ class UpdateCupFile(State):
     async def handle_upload(self, files: list[rx.UploadFile]):
         try:
             self.stage = self.RUNNING
+            self.error_message = ""
+            self._zip_file = None
+            self.counts = {}
             yield
 
+            data = b""
+            file = None
             for file in files:
                 data = await file.read()
                 file_name = file.filename or ""
                 self.file_name = os.path.basename(file_name)
+
+            if not data:
+                raise ValueError("No file content received.")
 
             if data:
                 self.log_event(
                     "upload", {"file_name": file.filename, "file_size": file.size}
                 )
 
-            updated_file, report, counts, _data_report = update_airports_in_cup(
+            updated_file, report, counts, _data_report = await asyncio.to_thread(
+                update_airports_in_cup,
                 data,
                 self.file_name,
                 fix_location=self.update_locations,
@@ -151,7 +161,11 @@ class UpdateCupFile(State):
     @rx.event
     def download_zip(self):
         if not self._zip_file:
-            raise ValueError(self.NO_ZIP_ERROR)
+            self.stage = self.ERROR
+            self.error_message = self.NO_ZIP_ERROR
+            self.log_event("download_without_zip", {"file_name": self.file_name})
+            yield
+            return
 
         updated_name = f"{self.file_name.replace('.cup', '')}_updated.zip"
 
