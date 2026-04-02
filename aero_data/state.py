@@ -138,9 +138,15 @@ class UpdateCupFile(State):
             self.counts = counts
             self.report_text = report
             self._zip_file = self.create_zip(updated_file, updated_file_name, report)
+            updated_zip_name = f"{self.file_name.replace('.cup', '')}_updated.zip"
 
             self.stage = self.DONE
             yield
+            self.log_event(
+                "download_update_package_auto",
+                {"file_name": updated_zip_name, "file_size": len(self._zip_file)},
+            )
+            yield rx.download(filename=updated_zip_name, data=self._zip_file)
         except Exception as e:
             self.stage = self.ERROR
             self.error_message = str(e)
