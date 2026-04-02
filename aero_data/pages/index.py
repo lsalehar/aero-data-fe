@@ -169,36 +169,6 @@ def upload_form(upload_id: str) -> rx.Component:
                             on_click=UpdateCupFile.reset_state(upload_id),
                             flex_grow=1,
                         ),
-                        rx.button(
-                            "Download updated file",
-                            on_click=UpdateCupFile.download_zip,
-                            flex_grow=1,
-                        ),
-                        rx.dialog.root(
-                            rx.dialog.trigger(rx.button("View report", variant="soft")),
-                            rx.dialog.content(
-                                rx.dialog.title("Update report"),
-                                rx.scroll_area(
-                                    rx.code(
-                                        UpdateCupFile.report_text,
-                                        width="100%",
-                                        max_height="50vh",
-                                    )
-                                ),
-                                rx.hstack(
-                                    rx.button(
-                                        "Download report",
-                                        on_click=UpdateCupFile.download_report,
-                                        variant="soft",
-                                    ),
-                                    rx.dialog.close(
-                                        rx.button("Close", variant="outline")
-                                    ),
-                                    justify="end",
-                                    spacing="3",
-                                ),
-                            ),
-                        ),
                         width="100%",
                         spacing="4",
                     ),
