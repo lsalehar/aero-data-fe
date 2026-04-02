@@ -52,7 +52,7 @@ requires-dist = [
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13.0" },
     { name = "python-decouple", specifier = ">=3.8" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
-    { name = "reflex", specifier = ">=0.8.13" },
+    { name = "reflex", specifier = ">=0.8.28" },
     { name = "reflex-hosting-cli", marker = "extra == 'dev'", specifier = ">=0.1.62" },
     { name = "reverse-geocode", specifier = ">=1.6.5" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.0" },
@@ -2342,7 +2342,7 @@ wheels = [
 
 [[package]]
 name = "reflex"
-version = "0.8.26"
+version = "0.8.28.post1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "alembic" },
@@ -2363,9 +2363,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/38/7d/b4e6e7de6eae4258bae3dee3e2196eca0f8a59655c471be3e9beb51734bf/reflex-0.8.26.tar.gz", hash = "sha256:27e0571b5422454032674d155a4372fe526670312ddeb9b137bbe1e14d6835d9", size = 572220, upload-time = "2026-01-20T22:54:43.21Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4a/28/1e7f2f8a1f6147a47c7b7f27d550311f18e0f6f85b8de9e3c5190dec6efd/reflex-0.8.28.post1.tar.gz", hash = "sha256:bf6f5bbb40c2cebc14bc774dfc10fa7cb99d65bc7fbf2383528b6a0e9e786d3f", size = 574699, upload-time = "2026-03-19T19:23:38.087Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/11/49/0441019df3c113927cdb5d439a975c5c6674183d637186f439e4a25d7d58/reflex-0.8.26-py3-none-any.whl", hash = "sha256:b51bc6c1a5087f52c1567ace3752edcbff4bd12453fee0f90384271d0cc4da48", size = 814949, upload-time = "2026-01-20T22:54:41.292Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/a1/20f699d5c2f25fc8994ad055779b46e917b2fe9122ac7cebf5e7dbf5d759/reflex-0.8.28.post1-py3-none-any.whl", hash = "sha256:9c251802042964eec9378ee7bdd785376ad89e3f6be7fa2ac074b55901694999", size = 817935, upload-time = "2026-03-19T19:23:36.201Z" },
 ]
 
 [[package]]
