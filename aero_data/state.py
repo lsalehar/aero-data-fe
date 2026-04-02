@@ -2,8 +2,6 @@ import io
 import os
 import zipfile
 from datetime import datetime
-from typing import ClassVar
-
 import reflex as rx
 
 from aero_data.src.analytics import get_nr_updates, get_unique_visits, log_event
@@ -58,7 +56,7 @@ class UpdateCupFile(State):
     add_missing: bool = True
     delete_closed: bool = False
     _zip_file: bytes | None = None
-    counts: ClassVar[dict[str, int]] = {}
+    counts: dict[str, int] = {}
     report_text: str = ""
     report_open: bool = False
 
@@ -116,7 +114,7 @@ class UpdateCupFile(State):
                     "upload", {"file_name": file.filename, "file_size": file.size}
                 )
 
-            updated_file, report, counts = update_airports_in_cup(
+            updated_file, report, counts, _data_report = update_airports_in_cup(
                 data,
                 self.file_name,
                 fix_location=self.update_locations,
@@ -128,6 +126,7 @@ class UpdateCupFile(State):
             self.log_event("cup_updated", {"file_name": updated_file_name})
 
             self.counts = counts
+            self.report_text = report
             self._zip_file = self.create_zip(updated_file, updated_file_name, report)
 
             self.stage = self.DONE

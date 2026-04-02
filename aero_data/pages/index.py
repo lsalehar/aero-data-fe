@@ -83,7 +83,7 @@ def select_file(upload_id: str) -> rx.Component:
         ),
         switch(
             "Add missing airports",
-            "delete_closed",
+            "add_missing",
             default_checked=UpdateCupFile.add_missing,
             on_change=UpdateCupFile.set_add_missing,  # type:ignore
             tooltip_content=(

@@ -190,8 +190,16 @@ def update_airports_in_cup(
 
     # Prepare points for bulk queries
     points = [apt.get_point() for apt in airports_in_cup]
+    all_waypoint_points = [wpt.get_point() for wpt in cup_file.waypoints]
     # Prepare a list of ids that we've seen in the file
     seen_ids = []
+    excluded_apt_types = [
+        AirportType.AIRPORT_WATER,
+        AirportType.CLOSED,
+        AirportType.HELIPORT_CIVIL,
+        AirportType.HELIPORT_MIL,
+        AirportType.UNKNOWN,
+    ]
 
     for point_chunk, apt_chunk in zip(
         chunked(points, chunk_size), chunked(airports_in_cup, chunk_size), strict=False
@@ -232,24 +240,18 @@ def update_airports_in_cup(
                     (deepcopy(apt_in_cup), closest_apt.to_cup(), closest_apt.distance)
                 )
 
-        if add_new:
-            new_apts = get_apts_in_bbox(
-                MultiPoint(point_chunk).bounds,
-                exclude_source_ids=seen_ids,
-                exclude_apt_types=[
-                    AirportType.AIRPORT_WATER,
-                    AirportType.CLOSED,
-                    AirportType.HELIPORT_CIVIL,
-                    AirportType.HELIPORT_MIL,
-                    AirportType.UNKNOWN,
-                ],
-            )
-            if new_apts:
-                for apt in new_apts:
-                    apt_obj = Airport.deserialize_apt_json(apt)
-                    cup_file.waypoints.append(apt_obj.to_cup())
-                    seen_ids.append(apt_obj.source_id)  # type: ignore
-                    data_report["added"].append(apt_obj.to_cup())
+    if add_new and all_waypoint_points:
+        new_apts = get_apts_in_bbox(
+            MultiPoint(all_waypoint_points).bounds,
+            exclude_source_ids=seen_ids,
+            exclude_apt_types=excluded_apt_types,
+        )
+        if new_apts:
+            for apt in new_apts:
+                apt_obj = Airport.deserialize_apt_json(apt)
+                cup_file.waypoints.append(apt_obj.to_cup())
+                seen_ids.append(apt_obj.source_id)  # type: ignore
+                data_report["added"].append(apt_obj.to_cup())
 
     counts["updated"] = len(data_report["updated"])
     counts["added"] = len(data_report["added"])
