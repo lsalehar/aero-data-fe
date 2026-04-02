@@ -70,6 +70,7 @@ def get_apts_in_bbox(
     bbox: tuple | list,
     exclude_source_ids: list | None = None,
     exclude_apt_types: list | None = None,
+    page_size: int = 1000,
 ):
     if db_client is None:
         logger.warning("Database client unavailable; cannot fetch airports in bbox.")
@@ -84,5 +85,24 @@ def get_apts_in_bbox(
         parameters.update(exclude_ids=exclude_source_ids)
     if isinstance(exclude_apt_types, (list, tuple)) and exclude_apt_types:
         parameters.update(exclude_apt_types=exclude_apt_types)
-    response = db_client.rpc("get_airports_in_bbox", params=parameters).execute()
-    return response.data if response.data else None
+
+    all_rows: list[dict] = []
+    start = 0
+
+    while True:
+        end = start + page_size - 1
+        response = (
+            db_client.rpc("get_airports_in_bbox", params=parameters)
+            .order("source_id")
+            .range(start, end)
+            .execute()
+        )
+        rows = response.data or []
+        if not rows:
+            break
+        all_rows.extend(rows)
+        if len(rows) < page_size:
+            break
+        start += page_size
+
+    return all_rows if all_rows else None
